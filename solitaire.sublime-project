@@ -1,11 +1,11 @@
 {
-	"folders":
-	[
-		{
-			"path": ".",
-			"follow_symlinks": true,
+    "folders":
+    [
+        {
+            "path": ".",
+            "follow_symlinks": true,
             "file_exclude_patterns": ["*.sublime-project", "package-lock.json"],
             "folder_exclude_patterns": ["node_modules", "dist"]
-		}
-	]
+        }
+    ]
 }
