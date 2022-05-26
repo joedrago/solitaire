@@ -1,5 +1,4 @@
 import indexHTML from './index.html'
-console.log indexHTML
 
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom/client'

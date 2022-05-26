@@ -23,6 +23,7 @@ class App extends Component
 
   render: ->
     return el SolitaireView, {
+      app: this
       width: @state.width
       height: @state.height
     }
