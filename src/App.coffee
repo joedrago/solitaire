@@ -28,4 +28,7 @@ class App extends Component
       height: @state.height
     }
 
+  gameClick: (type, outerIndex, innerIndex) ->
+    console.log "gameClick(#{type}, #{outerIndex}, #{innerIndex})"
+
 export default App
