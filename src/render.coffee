@@ -7,6 +7,8 @@ import guidePNG from './guide.png'
 export CARD_BACK = -1
 export CARD_GUIDE = -2
 
+export CARD_FLIP_FLAG = 1024
+
 export CARD_WIDTH = 120
 export CARD_HEIGHT = 162
 export CARD_ASPECT_RATIO = CARD_WIDTH / CARD_HEIGHT
@@ -21,15 +23,16 @@ export card = (key, raw, x, y, scale, isSelected, onClick) ->
   #   w = Math.floor(h / CARD_ASPECT_RATIO)
   # scale = w / CARD_WIDTH
 
-  if raw == CARD_BACK
-    url = "url(#{backPNG})"
-    val = 0
-    suit = 0
-  else if raw == CARD_GUIDE
+  if raw == CARD_GUIDE
     url = "url(#{guidePNG})"
     val = 0
     suit = 0
+  else if (raw == CARD_BACK) || ((raw & CARD_FLIP_FLAG) == CARD_FLIP_FLAG)
+    url = "url(#{backPNG})"
+    val = 0
+    suit = 0
   else
+    raw = raw & ~CARD_FLIP_FLAG
     url = "url(#{cardsPNG})"
     val = raw % 13
     suit = Math.floor(raw / 13)
