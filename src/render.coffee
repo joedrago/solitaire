@@ -67,6 +67,13 @@ card28, card29, card30, card31, card32, card33, card34, card35, card36,
 card37, card38, card39, card40, card41, card42, card43, card44, card45,
 card46, card47, card48, card49, card50, card51 ]
 
+window.solitairePreloadedImages = []
+for preloadUrl in CARD_URLS
+  console.log "Preloading: #{preloadUrl}"
+  img = new Image()
+  img.src = preloadUrl
+  window.solitairePreloadedImages.push img
+
 export CARD_WIDTH = 119
 export CARD_HEIGHT = 162
 export CARD_ASPECT_RATIO = CARD_WIDTH / CARD_HEIGHT
