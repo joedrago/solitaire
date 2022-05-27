@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
-import { el } from './utils'
+import { el } from './reactutils'
 import * as render from './render'
+import * as cardutils from './cardutils'
 
 UNIT = render.CARD_HEIGHT
 PILE_CARD_OVERLAP = 0.105
@@ -68,12 +69,11 @@ class SolitaireView extends Component
 
     if gameState.draw.pos == 'top'
       # Top Left Draw Pile
-      drawCard = render.CARD_BACK
+      drawCard = cardutils.BACK
       if gameState.draw.cards.length == 0
-        drawCard = render.CARD_GUIDE
-      renderedCards.push(render.card 'draw', drawCard, renderOffsetL + (renderScalePixels * CENTER_CARD_MARGIN), renderOffsetT, renderScale, false, (e) =>
-          e.stopPropagation()
-          @props.app.gameClick('draw')
+        drawCard = cardutils.GUIDE
+      renderedCards.push(render.card 'draw', drawCard, renderOffsetL + (renderScalePixels * CENTER_CARD_MARGIN), renderOffsetT, renderScale, false, (isRightClick) =>
+          @props.app.gameClick('draw', 0, 0, isRightClick)
       )
 
       pileRenderCount = gameState.pile.cards.length
@@ -86,17 +86,15 @@ class SolitaireView extends Component
         if (gameState.selection.type == 'pile') and (pileIndex == (gameState.pile.cards.length - 1))
           isSelected = true
         do (pile, pileIndex, isSelected) =>
-          renderedCards.push(render.card "pile#{pileIndex}", pile, renderOffsetL + ((1 + ((pileIndex - startPileIndex) * PILE_CARD_OVERLAP)) * renderScalePixels), renderOffsetT, renderScale, isSelected, (e) =>
-              e.stopPropagation()
-              @props.app.gameClick('pile', pileIndex)
+          renderedCards.push(render.card "pile#{pileIndex}", pile, renderOffsetL + ((1 + CENTER_CARD_MARGIN + ((pileIndex - startPileIndex) * PILE_CARD_OVERLAP)) * renderScalePixels), renderOffsetT, renderScale, isSelected, (isRightClick) =>
+              @props.app.gameClick('pile', pileIndex, 0, isRightClick)
           )
 
     currentL = renderOffsetL + ((foundationOffsetL + CENTER_CARD_MARGIN) * renderScalePixels)
     for foundation, foundationIndex in gameState.foundations
       do (foundation, foundationIndex) =>
-        renderedCards.push(render.card "found#{foundationIndex}", foundation, currentL, renderOffsetT, renderScale, false, (e) =>
-          e.stopPropagation()
-          @props.app.gameClick('foundation', foundationIndex)
+        renderedCards.push(render.card "found#{foundationIndex}", foundation, currentL, renderOffsetT, renderScale, false, (isRightClick) =>
+          @props.app.gameClick('foundation', foundationIndex, 0, isRightClick)
         )
       currentL += renderScalePixels
 
@@ -104,9 +102,8 @@ class SolitaireView extends Component
     for workColumn, workColumnIndex in gameState.work
       if workColumn.length == 0
         do (workColumnIndex, workIndex) =>
-          renderedCards.push(render.card "work#{workColumnIndex}_#{workIndex}", render.CARD_GUIDE, currentL, workTop * renderScalePixels, renderScale, false, (e) =>
-            e.stopPropagation()
-            @props.app.gameClick('work', workColumnIndex, -1)
+          renderedCards.push(render.card "work#{workColumnIndex}_#{workIndex}", cardutils.GUIDE, currentL, workTop * renderScalePixels, renderScale, false, (isRightClick) =>
+            @props.app.gameClick('work', workColumnIndex, -1, isRightClick)
           )
       else
         for work, workIndex in workColumn
@@ -114,20 +111,18 @@ class SolitaireView extends Component
           if (gameState.selection.type == 'work') and (workColumnIndex == gameState.selection.outerIndex) and (workIndex >= gameState.selection.innerIndex)
             isSelected = true
           do (work, workColumnIndex, workIndex, isSelected) =>
-            renderedCards.push(render.card "work#{workColumnIndex}_#{workIndex}", work, currentL, ((workTop + (workIndex * WORK_CARD_OVERLAP)) * renderScalePixels), renderScale, isSelected, (e) =>
-              e.stopPropagation()
-              @props.app.gameClick('work', workColumnIndex, workIndex)
+            renderedCards.push(render.card "work#{workColumnIndex}_#{workIndex}", work, currentL, ((workTop + (workIndex * WORK_CARD_OVERLAP)) * renderScalePixels), renderScale, isSelected, (isRightClick) =>
+              @props.app.gameClick('work', workColumnIndex, workIndex, isRightClick)
             )
       currentL += renderScalePixels
 
     if gameState.draw.pos == 'bottom'
       # Bottom Left Draw Pile
-      drawCard = render.CARD_BACK
+      drawCard = cardutils.BACK
       if gameState.draw.empty
-        drawCard = render.CARD_GUIDE
-      renderedCards.push(render.card 'draw', drawCard, renderOffsetL, (maxHeight - 0.25) * renderScalePixels, renderScale, false, (e) =>
-          e.stopPropagation()
-          @props.app.gameClick('draw')
+        drawCard = cardutils.GUIDE
+      renderedCards.push(render.card 'draw', drawCard, renderOffsetL, (maxHeight - 0.35) * renderScalePixels, renderScale, false, (isRightClick) =>
+          @props.app.gameClick('draw', 0, 0, isRightClick)
       )
 
     return el 'div', {
@@ -138,8 +133,11 @@ class SolitaireView extends Component
         width: @props.width
         height: @props.height
 
+      onContextMenu: (e) =>
+        e.preventDefault()
+        @props.app.gameClick('background', 0, 0, true)
       onClick: =>
-        @props.app.gameClick('background')
+        @props.app.gameClick('background', 0, 0, false)
     }, renderedCards
 
 export default SolitaireView

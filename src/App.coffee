@@ -4,7 +4,7 @@ import Button from '@mui/material/Button'
 import SolitaireGame from './SolitaireGame'
 import SolitaireView from './SolitaireView'
 import * as render from './render'
-import { el } from './utils'
+import { el } from './reactutils'
 
 class App extends Component
   constructor: (props) ->
@@ -34,8 +34,8 @@ class App extends Component
       height: @state.height
     }
 
-  gameClick: (type, outerIndex, innerIndex) ->
-    @game.click(type, outerIndex, innerIndex)
+  gameClick: (type, outerIndex, innerIndex, isRightClick) ->
+    @game.click(type, outerIndex, innerIndex, isRightClick)
     @setState {
       gameState: @game.state
     }
