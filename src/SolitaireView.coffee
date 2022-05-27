@@ -145,14 +145,20 @@ class SolitaireView extends Component
           @cardClick('draw', 0, 0, x, y, isRightClick, isMouseUp)
       )
 
-      renderedCards.push(render.card "pileguide", cardutils.GUIDE, renderOffsetL + ((1 + CENTER_CARD_MARGIN) * @renderScalePixels), renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
-        # clicking on the pile guide does nothing
-      )
-
       pileRenderCount = gameState.pile.cards.length
       if pileRenderCount > gameState.pile.show
         pileRenderCount = gameState.pile.show
       startPileIndex = gameState.pile.cards.length - pileRenderCount
+
+      if startPileIndex > 0
+        renderedCards.push(render.card "pileundercard", gameState.pile.cards[startPileIndex-1], renderOffsetL + ((1 + CENTER_CARD_MARGIN) * @renderScalePixels), renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
+          # clicking on the pile undercard does nothing
+        )
+      else
+        renderedCards.push(render.card "pileguide", cardutils.GUIDE, renderOffsetL + ((1 + CENTER_CARD_MARGIN) * @renderScalePixels), renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
+          # clicking on the pile guide does nothing
+        )
+
       for pileIndex in [startPileIndex...gameState.pile.cards.length]
         pile = gameState.pile.cards[pileIndex]
         isSelected = false
