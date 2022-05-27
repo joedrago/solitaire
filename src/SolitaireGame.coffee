@@ -8,7 +8,7 @@ class SolitaireGame
   constructor: ->
     @saveTimeout = null
     @state = null
-    @mode = 'klondike'
+    @mode = if (window.location.hash == '#s') then 'spiderette' else 'klondike'
     @modes =
       klondike:
         newGame: @klondikeNewGame.bind(this)
