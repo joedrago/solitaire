@@ -201,7 +201,7 @@ class SolitaireView extends Component
     if gameState.draw.pos == 'bottom'
       # Bottom Left Draw Pile
       drawCard = cardutils.BACK
-      if gameState.draw.empty
+      if gameState.draw.cards.length == 0
         drawCard = cardutils.GUIDE
       renderedCards.push(render.card 'draw', drawCard, renderOffsetL, (maxHeight - 0.35) * @renderScalePixels, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
           @cardClick('draw', 0, 0, x, y, isRightClick, isMouseUp)
