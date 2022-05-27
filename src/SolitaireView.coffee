@@ -129,7 +129,7 @@ class SolitaireView extends Component
       key: 'bg'
       style:
         zIndex: -1
-        backgroundColor: '#373'
+        backgroundColor: '#363'
         width: @props.width
         height: @props.height
 
