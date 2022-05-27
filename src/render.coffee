@@ -69,7 +69,7 @@ card46, card47, card48, card49, card50, card51 ]
 
 window.solitairePreloadedImages = []
 for preloadUrl in CARD_URLS
-  console.log "Preloading: #{preloadUrl}"
+  # console.log "Preloading: #{preloadUrl}"
   img = new Image()
   img.src = preloadUrl
   window.solitairePreloadedImages.push img
@@ -78,7 +78,14 @@ export CARD_WIDTH = 119
 export CARD_HEIGHT = 162
 export CARD_ASPECT_RATIO = CARD_WIDTH / CARD_HEIGHT
 
-export card = (key, raw, x, y, scale, isSelected, onClick) ->
+# How much must you drag in a direction before it starts to visually show the drag
+DRAG_SNAP_PIXELS = 10
+
+export card = (key, raw, x, y, scale, isSelected, selectOffsetX, selectOffsetY, onClick) ->
+  if isSelected and ((Math.abs(selectOffsetX) > DRAG_SNAP_PIXELS) or (Math.abs(selectOffsetY) > DRAG_SNAP_PIXELS))
+    x += selectOffsetX
+    y += selectOffsetY
+
   cardStyle =
     position: 'fixed'
     left: "#{x}px"
@@ -101,22 +108,38 @@ export card = (key, raw, x, y, scale, isSelected, onClick) ->
     url = CARD_URLS[raw]
     val = raw % 13
     suit = Math.floor(raw / 13)
-    cardStyle.border = "1px solid rgba(0, 0, 0, .5)"
+    cardStyle.border = "1px solid rgba(0, 0, 0, 0.5)"
     cardStyle.borderRadius = "10px"
 
+  stopPropagation = true
   if isSelected
-    cardStyle.filter = "invert(0.8)"
+    cardStyle.zIndex = 5
+    # cardStyle.filter = "invert(0.8)"
+    cardStyle.border = "2px solid rgba(255, 0, 0, 1)"
+
+    if (selectOffsetX != 0) or (selectOffsetY != 0)
+      stopPropagation = false
+      cardStyle.pointerEvents = 'none'
 
   return el 'img', {
     key: key
     src: url
     draggable: false
     onClick: (e) ->
-      e.stopPropagation()
-      onClick(false)
+      if stopPropagation
+        e.stopPropagation()
     onContextMenu: (e) ->
       e.preventDefault()
       e.stopPropagation()
-      onClick(true)
+      onClick(e.pageX, e.pageY, true, false)
+    onMouseDown: (e) ->
+      console.log e
+      if stopPropagation
+        e.stopPropagation()
+      onClick(e.pageX, e.pageY, e.button == 2, false)
+    onMouseUp: (e) ->
+      if stopPropagation
+        e.stopPropagation()
+      onClick(e.pageX, e.pageY, false, true)
     style: cardStyle
   }

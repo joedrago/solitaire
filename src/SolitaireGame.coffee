@@ -1,7 +1,5 @@
 import * as cardutils from './cardutils'
 
-DEBUG_DONT_SAVE = true
-
 # -------------------------------------------------------------------------------------------------
 
 class SolitaireGame
@@ -13,9 +11,11 @@ class SolitaireGame
       klondike:
         newGame: @klondikeNewGame.bind(this)
         click: @klondikeClick.bind(this)
+        won: @klondikeWon.bind(this)
       spiderette:
         newGame: @spideretteNewGame.bind(this)
         click: @spideretteClick.bind(this)
+        won: @spideretteWon.bind(this)
 
     if not @load()
       @newGame()
@@ -24,8 +24,8 @@ class SolitaireGame
   # Generic input handlers
 
   load: ->
-    if DEBUG_DONT_SAVE
-      return false
+    # return false
+
     rawPayload = localStorage.getItem('save')
     if not rawPayload?
       return false
@@ -41,8 +41,8 @@ class SolitaireGame
     return true
 
   save: ->
-    if DEBUG_DONT_SAVE
-      return
+    # return
+
     payload =
       mode: @mode
       state: @state
@@ -65,13 +65,18 @@ class SolitaireGame
       @mode = newMode
     if @modes[@mode]?
       @modes[@mode].newGame()
+      @save()
+
+  click: (type, outerIndex = 0, innerIndex = 0, isRightClick = false, isMouseUp = false) ->
+    console.log "game.click(#{type}, #{outerIndex}, #{innerIndex}, #{isRightClick}, #{isMouseUp})"
+    if @modes[@mode]?
+      @modes[@mode].click(type, outerIndex, innerIndex, isRightClick, isMouseUp)
       @queueSave()
 
-  click: (type, outerIndex = 0, innerIndex = 0, isRightClick = false) ->
-    console.log "game.click(#{type}, #{outerIndex}, #{innerIndex}, #{isRightClick})"
+  won: ->
     if @modes[@mode]?
-      @modes[@mode].click(type, outerIndex, innerIndex, isRightClick)
-      @queueSave()
+      return @modes[@mode].won()
+    return false
 
   # -----------------------------------------------------------------------------------------------
   # Generic helpers
@@ -100,6 +105,12 @@ class SolitaireGame
     for card in cards
       infos.push cardutils.info(card)
     console.log prefix, infos
+
+  workPileEmpty: ->
+    for work in @state.work
+      if work.length > 0
+        return false
+    return true
 
   # -----------------------------------------------------------------------------------------------
   # Selection
@@ -195,7 +206,7 @@ class SolitaireGame
         return true
     return false
 
-  klondikeClick: (type, outerIndex, innerIndex, isRightClick) ->
+  klondikeClick: (type, outerIndex, innerIndex, isRightClick, isMouseUp) ->
     switch type
       # -------------------------------------------------------------------------------------------
       when 'draw'
@@ -270,9 +281,12 @@ class SolitaireGame
         # Probably a background click, just forget the selection
         @select('none')
 
-    if isRightClick
+    if isRightClick and not isMouseUp
       @klondikeSendHome(type, outerIndex, innerIndex)
       @select('none')
+
+  klondikeWon: ->
+    return (@state.draw.cards.length == 0) and (@state.pile.cards.length == 0) and @workPileEmpty()
 
   # -----------------------------------------------------------------------------------------------
   # Mode: Spiderette
@@ -325,9 +339,9 @@ class SolitaireGame
 
           if (kingPos >= 0) and ((rawIndex - kingPos) == 12)
             foundOne = true
-            @dumpCards "BEFORE REMOVE: ", @state.work[workIndex]
+            # @dumpCards "BEFORE REMOVE: ", @state.work[workIndex]
             @state.work[workIndex].splice(kingPos, 13)
-            @dumpCards "AFTER REMOVE: ", @state.work[workIndex]
+            # @dumpCards "AFTER REMOVE: ", @state.work[workIndex]
 
             if @state.work[workIndex].length > 0
               @state.work[workIndex][@state.work[workIndex].length - 1] &= ~cardutils.FLIP_FLAG
@@ -344,7 +358,7 @@ class SolitaireGame
 
     @select('none')
 
-  spideretteClick: (type, outerIndex, innerIndex, isRightClick) ->
+  spideretteClick: (type, outerIndex, innerIndex, isRightClick, isMouseUp) ->
     # if isRightClick
     #   @spideretteDeal()
     #   return
@@ -369,6 +383,8 @@ class SolitaireGame
               dst.push c
             @eatSelection()
 
+          @select('none')
+        else if sameWorkPile and isMouseUp
           @select('none')
         else
           # Selecting a fresh column
@@ -397,6 +413,9 @@ class SolitaireGame
         @select('none')
 
     @spideretteRemoveSets()
+
+  spideretteWon: ->
+    return (@state.draw.cards.length == 0) and (@state.pile.cards.length == 0) and @workPileEmpty()
 
   # -----------------------------------------------------------------------------------------------
 
