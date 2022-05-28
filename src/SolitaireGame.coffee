@@ -50,12 +50,15 @@ class SolitaireGame
     console.log "Saved."
 
   queueSave: ->
-    if @saveTimeout?
-      clearTimeout(@saveTimeout)
-    @saveTimeout = setTimeout =>
-      @save()
-      @saveTimeout = null
-    , 3000
+    # Don't bother queueing, just save immediately
+    @save()
+
+    # if @saveTimeout?
+    #   clearTimeout(@saveTimeout)
+    # @saveTimeout = setTimeout =>
+    #   @save()
+    #   @saveTimeout = null
+    # , 3000
 
   # -----------------------------------------------------------------------------------------------
   # Generic input handlers

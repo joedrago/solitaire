@@ -81,20 +81,20 @@ class App extends Component
 
     drawerItems = [
       @createDrawerButton "newGameK", AcUnitIcon, "New Game: Klondike", =>
-        if confirm('Start a new Klondike game?')
-          @game.newGame('klondike')
-          @setState {
-            drawerOpen: false
-            gameState: @game.state
-          }
+        # if confirm('Start a new Klondike game?')
+        @game.newGame('klondike')
+        @setState {
+          drawerOpen: false
+          gameState: @game.state
+        }
 
       @createDrawerButton "newGameS", BugReportIcon, "New Game: Spiderette", =>
-        if confirm('Start a new Spiderette game?')
-          @game.newGame('spiderette')
-          @setState {
-            drawerOpen: false
-            gameState: @game.state
-          }
+        # if confirm('Start a new Spiderette game?')
+        @game.newGame('spiderette')
+        @setState {
+          drawerOpen: false
+          gameState: @game.state
+        }
     ]
 
     if fullscreen.available()
