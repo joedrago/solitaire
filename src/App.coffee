@@ -4,6 +4,13 @@ import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
 import Divider from '@mui/material/Divider'
 
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogTitle from '@mui/material/DialogTitle'
+import Typography from '@mui/material/Typography'
+
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 
@@ -16,6 +23,7 @@ import ListItemText from '@mui/material/ListItemText'
 import GamesIcon from '@mui/icons-material/Games'
 import FullscreenIcon from '@mui/icons-material/Fullscreen'
 import MenuIcon from '@mui/icons-material/Menu'
+import BookIcon from '@mui/icons-material/Book'
 
 import Snackbar from '@mui/material/Snackbar'
 
@@ -37,6 +45,7 @@ class App extends Component
       gameState: @game.state
       drawerOpen: false
       winToastOpen: false
+      helpOpen: false
 
   componentDidMount: ->
     window.addEventListener("resize", @onResize.bind(this))
@@ -96,6 +105,13 @@ class App extends Component
         @setState {
           drawerOpen: false
         }
+
+    drawerItems.push el Divider, { key: "helpDivider" }
+    drawerItems.push @createDrawerButton "helpMenu", BookIcon, "Rule Help: #{@game.modes[@game.mode].name}", =>
+      @setState {
+        helpOpen: true
+        drawerOpen: false
+      }
 
     drawer = el Drawer, {
       key: 'drawer'
@@ -164,6 +180,47 @@ class App extends Component
         }
     }
 
+    helpDialogTextSplits = @game.modes[@game.mode].help.split(/\n\n/)
+    helpTypographies = []
+    for text, textIndex in helpDialogTextSplits
+      variant = 'body1'
+      if matches = text.match(/^\| (.+)/)
+        variant = 'h6'
+        text = matches[1]
+      helpTypographies.push el Typography, {
+        key: "helpTypo#{textIndex}"
+        gutterBottom: true
+        variant: variant
+      }, [ text ]
+
+    helpDialog = el Dialog, {
+      key: "helpDialog"
+      open: @state.helpOpen
+      onClose: =>
+        @setState {
+          helpOpen: false
+        }
+    }, [
+      el DialogTitle, {
+        key: "helpDialogTitle"
+      }, [ "Rule Help: #{@game.modes[@game.mode].name}" ]
+      el DialogContent, {
+        key: "helpDialogContent"
+        dividers: true
+      }, helpTypographies
+      el DialogActions, {
+        key: "helpDialogActions"
+      }, [
+        el Button, {
+          key: "helpDialogOK"
+          onClick: =>
+            @setState {
+              helpOpen: false
+            }
+        }, [ "Got it!" ]
+      ]
+    ]
+
     return el 'div', {
         key: 'appcontainer'
       }, [
@@ -171,6 +228,7 @@ class App extends Component
       gameView
       menuButton
       winToast
+      helpDialog
     ]
 
   gameClick: (type, outerIndex, innerIndex, isRightClick, isMouseUp) ->

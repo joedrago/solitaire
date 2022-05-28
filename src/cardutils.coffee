@@ -38,7 +38,8 @@ calcInfo = (raw) ->
 export VALIDMOVE_DESCENDING = (1 << 0)
 export VALIDMOVE_ALTERNATING_COLOR = (1 << 1)
 export VALIDMOVE_ANY_OTHER_SUIT = (1 << 2)
-export VALIDMOVE_EMPTY_KINGS_ONLY = (1 << 3)
+export VALIDMOVE_MATCHING_SUIT = (1 << 3)
+export VALIDMOVE_EMPTY_KINGS_ONLY = (1 << 4)
 
 export validMove = (src, dst, validMoveFlags) ->
   srcInfo = calcInfo(src[0])
@@ -51,6 +52,8 @@ export validMove = (src, dst, validMoveFlags) ->
 
   dstInfo = calcInfo(dst[dst.length - 1])
   if (validMoveFlags & VALIDMOVE_ALTERNATING_COLOR) and (srcInfo.red == dstInfo.red)
+    return false
+  if (validMoveFlags & VALIDMOVE_MATCHING_SUIT) and (srcInfo.suit != dstInfo.suit)
     return false
   if (validMoveFlags & VALIDMOVE_ANY_OTHER_SUIT) and (srcInfo.suit == dstInfo.suit)
     return false

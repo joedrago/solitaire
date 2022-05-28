@@ -2,6 +2,23 @@ import * as cardutils from '../cardutils'
 
 mode =
   name: "Klondike"
+  help: """
+    | GOAL:
+
+    Build the foundations up in suit from ace to king.
+
+    | PLAY:
+
+    Cards are flipped 3 at a time to a waste pile. Columns are built down, in
+    alternating colors. All packed cards in a column must be moved as a unit
+    to other columns.
+
+    The topmost card of any column or the waste pile may be moved to a
+    foundation. The top card of the waste pile may also be moved to a column
+    if desired, thus making the card below it playable also.
+
+    Unlimited redeals are allowed.
+  """
 
   newGame: ->
     @state =

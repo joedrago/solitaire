@@ -2,6 +2,21 @@ import * as cardutils from '../cardutils'
 
 mode =
   name: "Yukon"
+  help: """
+    | GOAL:
+
+    Build the foundations up in suit from ace to king.
+
+    | PLAY:
+
+    Build columns down and in any other suit.
+
+    Any face up card in the tableau along with all other cards on top of it,
+    may be moved to another column provided that the connecting cards folow
+    the build rules.Spaces in columns are filled only with kings.
+
+    There is no redeal.
+  """
 
   newGame: ->
     @state =

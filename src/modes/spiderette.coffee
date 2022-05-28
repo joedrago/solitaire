@@ -2,6 +2,25 @@ import * as cardutils from '../cardutils'
 
 mode =
   name: "Spiderette"
+  help: """
+    | GOAL:
+
+    Remove all cards from the tableau by building four sets of cards from king
+    to ace regardless of suit. The completed sets are removed from the
+    tableau immediately.
+
+    | PLAY:
+
+    Build columns down regardless of suit. Either the topmost card or all
+    packed cards of a column may be moved to another column which meets the
+    build requirements.
+
+    When play comes to a standstill (or sooner if desired), deal the next
+    group of 7 cards, 1 to each column, then play again if possible. Spaces
+    in columns may be filled with any available card or build.
+
+    There is no redeal.
+  """
 
   newGame: ->
     @state =

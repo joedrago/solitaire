@@ -12,6 +12,7 @@ class SolitaireGame
     @loadMode('klondike')
     @loadMode('spiderette')
     @loadMode('yukon')
+    @loadMode('scorpion')
 
     if not @load()
       @newGame()
@@ -27,6 +28,7 @@ class SolitaireGame
 
     modeProps =
       name: true
+      help: true
 
     m = require("./modes/#{modeName}").default
     @modes[modeName] = {}
