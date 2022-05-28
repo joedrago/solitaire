@@ -13,8 +13,8 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 
-import AcUnitIcon from '@mui/icons-material/AcUnit'
-import BugReportIcon from '@mui/icons-material/BugReport'
+import GamesIcon from '@mui/icons-material/Games'
+import FullscreenIcon from '@mui/icons-material/Fullscreen'
 import MenuIcon from '@mui/icons-material/Menu'
 
 import Snackbar from '@mui/material/Snackbar'
@@ -79,27 +79,19 @@ class App extends Component
       height: @state.height
     }
 
-    drawerItems = [
-      @createDrawerButton "newGameK", AcUnitIcon, "New Game: Klondike", =>
-        # if confirm('Start a new Klondike game?')
-        @game.newGame('klondike')
-        @setState {
-          drawerOpen: false
-          gameState: @game.state
-        }
-
-      @createDrawerButton "newGameS", BugReportIcon, "New Game: Spiderette", =>
-        # if confirm('Start a new Spiderette game?')
-        @game.newGame('spiderette')
-        @setState {
-          drawerOpen: false
-          gameState: @game.state
-        }
-    ]
+    drawerItems = []
+    for modeName, mode of @game.modes
+      do (drawerItems, modeName, mode) =>
+        drawerItems.push @createDrawerButton "newGame#{modeName}", GamesIcon, "New Game: #{mode.name}", =>
+            @game.newGame(modeName)
+            @setState {
+              drawerOpen: false
+              gameState: @game.state
+            }
 
     if fullscreen.available()
       drawerItems.push el Divider, { key: "fullscreenDivider" }
-      drawerItems.push @createDrawerButton "fullscreen", BugReportIcon, "Toggle Fullscreen", =>
+      drawerItems.push @createDrawerButton "fullscreen", FullscreenIcon, "Toggle Fullscreen", =>
         fullscreen.toggle()
         @setState {
           drawerOpen: false

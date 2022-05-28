@@ -131,7 +131,7 @@ export card = (key, raw, x, y, scale, isSelected, selectOffsetX, selectOffsetY, 
     onContextMenu: (e) ->
       e.preventDefault()
       e.stopPropagation()
-      onClick(e.pageX, e.pageY, true, false)
+      # onClick(e.pageX, e.pageY, true, false)
     onMouseDown: (e) ->
       console.log e
       if stopPropagation
@@ -140,6 +140,6 @@ export card = (key, raw, x, y, scale, isSelected, selectOffsetX, selectOffsetY, 
     onMouseUp: (e) ->
       if stopPropagation
         e.stopPropagation()
-      onClick(e.pageX, e.pageY, false, true)
+      onClick(e.pageX, e.pageY, e.button == 2, true)
     style: cardStyle
   }
