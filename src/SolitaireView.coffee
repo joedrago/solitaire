@@ -192,6 +192,8 @@ class SolitaireView extends Component
         isSelected = false
         if (gameState.selection.type == 'work') and (workColumnIndex == gameState.selection.outerIndex) and (workIndex >= gameState.selection.innerIndex)
           isSelected = true
+          if gameState.selection.foundationOnly
+            isSelected = "foundationOnly"
         do (work, workColumnIndex, workIndex, isSelected) =>
           renderedCards.push(render.card "work#{workColumnIndex}_#{workIndex}", work, currentL, ((workTop + (workIndex * WORK_CARD_OVERLAP)) * @renderScalePixels), renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
             @cardClick('work', workColumnIndex, workIndex, x, y, isRightClick, isMouseUp)
@@ -217,7 +219,7 @@ class SolitaireView extends Component
 
       onContextMenu: (e) =>
         e.preventDefault()
-        @onBackground(true)
+        # @onBackground(true)
       onMouseDown: =>
         @onBackground(false)
       onMouseUp: =>

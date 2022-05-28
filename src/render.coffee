@@ -82,6 +82,10 @@ export CARD_ASPECT_RATIO = CARD_WIDTH / CARD_HEIGHT
 DRAG_SNAP_PIXELS = 10
 
 export card = (key, raw, x, y, scale, isSelected, selectOffsetX, selectOffsetY, onClick) ->
+  foundationOnly = isSelected == "foundationOnly"
+  if foundationOnly
+    isSelected = true
+
   if isSelected and ((Math.abs(selectOffsetX) > DRAG_SNAP_PIXELS) or (Math.abs(selectOffsetY) > DRAG_SNAP_PIXELS))
     x += selectOffsetX
     y += selectOffsetY
@@ -115,7 +119,9 @@ export card = (key, raw, x, y, scale, isSelected, selectOffsetX, selectOffsetY, 
   if isSelected
     cardStyle.zIndex = 5
     # cardStyle.filter = "invert(0.8)"
-    cardStyle.border = "2px solid rgba(255, 0, 0, 1)"
+    cardStyle.border = "2px solid rgba(128, 128, 255, 1)"
+    if foundationOnly
+      cardStyle.border = "4px solid rgba(255, 255, 0, 1)"
 
     if (selectOffsetX != 0) or (selectOffsetY != 0)
       stopPropagation = false

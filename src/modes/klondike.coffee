@@ -103,8 +103,12 @@ mode =
           sameWorkPile = (@state.selection.type == 'work') and (@state.selection.outerIndex == outerIndex)
           if (src.length > 0) and not sameWorkPile
             # Moving into work
-            dst = @state.work[outerIndex]
 
+            if @state.selection.foundationOnly
+              @select('none')
+              return
+
+            dst = @state.work[outerIndex]
             if cardutils.validMove(src, dst, cardutils.VALIDMOVE_DESCENDING | cardutils.VALIDMOVE_ALTERNATING_COLOR | cardutils.VALIDMOVE_EMPTY_KINGS_ONLY)
               for c in src
                 dst.push c
@@ -116,6 +120,8 @@ mode =
           else
             # Selecting a fresh column
             col = @state.work[outerIndex]
+            wasClickingLastCard = innerIndex == col.length - 1
+
             innerIndex = 0 # "All packed cards in a column must be moved as a unit to other columns."
             while (innerIndex < col.length) and (col[innerIndex] & cardutils.FLIP_FLAG)
               # Don't select face down cards
@@ -130,7 +136,16 @@ mode =
                 break
               innerIndex -= 1
 
-            @select(type, outerIndex, innerIndex)
+            isClickingLastCard = innerIndex == col.length - 1
+
+            console.log "wasClickingLastCard: #{wasClickingLastCard}, isClickingLastCard: #{isClickingLastCard}"
+            if wasClickingLastCard and not isClickingLastCard
+              console.log "ye"
+              @select(type, outerIndex, col.length - 1)
+              @state.selection.foundationOnly = true
+            else
+              console.log "ne"
+              @select(type, outerIndex, innerIndex)
 
 
       # -------------------------------------------------------------------------------------------
