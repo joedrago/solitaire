@@ -24,6 +24,7 @@ import GamesIcon from '@mui/icons-material/Games'
 import FullscreenIcon from '@mui/icons-material/Fullscreen'
 import MenuIcon from '@mui/icons-material/Menu'
 import BookIcon from '@mui/icons-material/Book'
+import ReplayIcon from '@mui/icons-material/Replay'
 
 import Snackbar from '@mui/material/Snackbar'
 
@@ -89,6 +90,22 @@ class App extends Component
     }
 
     drawerItems = []
+
+    drawerItems.push @createDrawerButton "playAgainMenu", ReplayIcon, "Play Again: #{@game.modes[@game.mode].name}", =>
+      @game.newGame()
+      @setState {
+        drawerOpen: false
+        gameState: @game.state
+      }
+    drawerItems.push el Divider, { key: "playAgainDivider" }
+
+    drawerItems.push @createDrawerButton "helpMenu", BookIcon, "Rule Help: #{@game.modes[@game.mode].name}", =>
+      @setState {
+        helpOpen: true
+        drawerOpen: false
+      }
+    drawerItems.push el Divider, { key: "helpDivider" }
+
     for modeName, mode of @game.modes
       do (drawerItems, modeName, mode) =>
         drawerItems.push @createDrawerButton "newGame#{modeName}", GamesIcon, "New Game: #{mode.name}", =>
@@ -105,13 +122,6 @@ class App extends Component
         @setState {
           drawerOpen: false
         }
-
-    drawerItems.push el Divider, { key: "helpDivider" }
-    drawerItems.push @createDrawerButton "helpMenu", BookIcon, "Rule Help: #{@game.modes[@game.mode].name}", =>
-      @setState {
-        helpOpen: true
-        drawerOpen: false
-      }
 
     drawer = el Drawer, {
       key: 'drawer'
