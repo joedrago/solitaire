@@ -133,6 +133,47 @@ class SolitaireGame
         return false
     return true
 
+  sendHome: (type, outerIndex, innerIndex) ->
+    src = null
+    switch type
+      when 'pile'
+        if @state.pile.cards.length > 0
+          src = @state.pile.cards[@state.pile.cards.length - 1]
+      when 'work'
+        srcCol = @state.work[outerIndex]
+        if innerIndex != srcCol.length - 1
+          return false
+        src = srcCol[innerIndex]
+
+    if not src?
+      return false
+
+    srcInfo = cardutils.info(src)
+    dstIndex = @findFoundationSuitIndex(src)
+    if dstIndex >= 0
+      sendHome = false
+      if @state.foundations[dstIndex] >= 0
+        dstInfo = cardutils.info(@state.foundations[dstIndex])
+        if srcInfo.value == dstInfo.value + 1
+          sendHome = true
+      else
+        if srcInfo.value == 0 # Ace
+          sendHome = true
+
+      if sendHome
+        @state.foundations[dstIndex] = src
+        switch type
+          when 'pile'
+            @state.pile.cards.pop()
+          when 'work'
+            srcCol.pop()
+            if srcCol.length > 0
+              # reveal any face down cards
+              srcCol[srcCol.length - 1] = srcCol[srcCol.length - 1] & ~cardutils.FLIP_FLAG
+        @select('none')
+        return true
+    return false
+
   # -----------------------------------------------------------------------------------------------
   # Selection
 

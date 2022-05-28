@@ -91,10 +91,10 @@ class SolitaireView extends Component
         largestWork = w.length
 
     topWidth = gameState.foundations.length
-    foundationOffsetL = 0
-    if gameState.draw.pos == 'top'
-      foundationOffsetL = 3
-      topWidth += foundationOffsetL
+    # foundationOffsetL = 0
+    # if gameState.draw.pos == 'top'
+    foundationOffsetL = 3
+    topWidth += foundationOffsetL
 
     workWidth = gameState.work.length
 

@@ -28,37 +28,19 @@ mode =
 
     @state.draw.cards = deck
 
-  klondikeSendHome: (type, outerIndex, innerIndex) ->
-    src = @getSelection()
-    if src.length != 1
-      return false
-
-    srcInfo = cardutils.info(src[0])
-    dstIndex = @findFoundationSuitIndex(src[0])
-    if dstIndex >= 0
-      sendHome = false
-      if @state.foundations[dstIndex] >= 0
-        dstInfo = cardutils.info(@state.foundations[dstIndex])
-        if srcInfo.value == dstInfo.value + 1
-          sendHome = true
-      else
-        if srcInfo.value == 0 # Ace
-          sendHome = true
-
-      if sendHome
-        @state.foundations[dstIndex] = src[0]
-        @eatSelection()
-        @select('none')
-        return true
-    return false
-
   click: (type, outerIndex, innerIndex, isRightClick, isMouseUp) ->
+    if isRightClick
+      if not isMouseUp
+        @sendHome(type, outerIndex, innerIndex)
+      @select('none')
+      return
+
     switch type
       # -------------------------------------------------------------------------------------------
       when 'draw'
         # Draw some cards
         if @state.draw.cards.length == 0
-          @state.draw.cards = cardutils.shuffle(@state.pile.cards)
+          @state.draw.cards = @state.pile.cards
           @state.pile.cards = []
         else
           cardsToDraw = @state.pile.show
@@ -136,11 +118,6 @@ mode =
       else
         # Probably a background click, just forget the selection
         @select('none')
-
-    if isRightClick
-      if not isMouseUp
-        @klondikeSendHome(type, outerIndex, innerIndex)
-      @select('none')
 
   won: ->
     return (@state.draw.cards.length == 0) and (@state.pile.cards.length == 0) and @workPileEmpty()
