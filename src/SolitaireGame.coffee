@@ -11,6 +11,7 @@ class SolitaireGame
     @modes = {}
     @loadMode('klondike')
     @loadMode('spiderette')
+    @loadMode('yukon')
 
     if not @load()
       @newGame()

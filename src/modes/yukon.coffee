@@ -1,12 +1,12 @@
 import * as cardutils from '../cardutils'
 
 mode =
-  name: "Klondike"
+  name: "Yukon"
 
   newGame: ->
     @state =
       draw:
-        pos: 'top'
+        pos: 'none'
         cards: []
       selection:
         type: 'none'
@@ -19,14 +19,16 @@ mode =
       work: []
 
     deck = cardutils.shuffle([0...52])
-    for columnIndex in [0...7]
+    @state.work.push [deck.shift()]
+    for columnIndex in [1...7]
       col = []
       for i in [0...columnIndex]
         col.push(deck.shift() | cardutils.FLIP_FLAG)
-      col.push(deck.shift())
+      for i in [0...5]
+        col.push(deck.shift())
       @state.work.push col
 
-    @state.draw.cards = deck
+    @state.draw.cards = []
 
   click: (type, outerIndex, innerIndex, isRightClick, isMouseUp) ->
     if isRightClick
@@ -36,25 +38,6 @@ mode =
       return
 
     switch type
-      # -------------------------------------------------------------------------------------------
-      when 'draw'
-        # Draw some cards
-        if @state.draw.cards.length == 0
-          @state.draw.cards = @state.pile.cards
-          @state.pile.cards = []
-        else
-          cardsToDraw = @state.pile.show
-          if cardsToDraw > @state.draw.cards.length
-            cardsToDraw = @state.draw.cards.length
-          for i in [0...cardsToDraw]
-            @state.pile.cards.push @state.draw.cards.shift()
-        @select('none')
-
-      # -------------------------------------------------------------------------------------------
-      when 'pile'
-        # Selecting the top card on the draw pile
-        @select('pile')
-
       # -------------------------------------------------------------------------------------------
       when 'foundation', 'work'
         # Potential selections or destinations
@@ -88,7 +71,7 @@ mode =
             # Moving into work
             dst = @state.work[outerIndex]
 
-            if cardutils.validMove(src, dst, cardutils.VALIDMOVE_DESCENDING | cardutils.VALIDMOVE_ALTERNATING_COLOR | cardutils.VALIDMOVE_EMPTY_KINGS_ONLY)
+            if cardutils.validMove(src, dst, cardutils.VALIDMOVE_DESCENDING | cardutils.VALIDMOVE_ANY_OTHER_SUIT | cardutils.VALIDMOVE_EMPTY_KINGS_ONLY)
               for c in src
                 dst.push c
               @eatSelection()
@@ -99,19 +82,9 @@ mode =
           else
             # Selecting a fresh column
             col = @state.work[outerIndex]
-            innerIndex = 0 # "All packed cards in a column must be moved as a unit to other columns."
             while (innerIndex < col.length) and (col[innerIndex] & cardutils.FLIP_FLAG)
               # Don't select face down cards
               innerIndex += 1
-
-            stopIndex = innerIndex
-            innerIndex = col.length - 1
-            while innerIndex > stopIndex
-              lowerInfo = cardutils.info(col[innerIndex])
-              upperInfo = cardutils.info(col[innerIndex - 1])
-              if lowerInfo.value != upperInfo.value - 1
-                break
-              innerIndex -= 1
 
             @select(type, outerIndex, innerIndex)
 
