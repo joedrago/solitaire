@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 
 import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
+import Divider from '@mui/material/Divider'
 
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
@@ -18,11 +19,10 @@ import MenuIcon from '@mui/icons-material/Menu'
 
 import Snackbar from '@mui/material/Snackbar'
 
-# import Divider from '@mui/material/Divider'
-
 import SolitaireGame from './SolitaireGame'
 import SolitaireView from './SolitaireView'
 import * as render from './render'
+import fullscreen from './fullscreen'
 import { el } from './reactutils'
 
 class App extends Component
@@ -79,6 +79,32 @@ class App extends Component
       height: @state.height
     }
 
+    drawerItems = [
+      @createDrawerButton "newGameK", AcUnitIcon, "New Game: Klondike", =>
+        if confirm('Start a new Klondike game?')
+          @game.newGame('klondike')
+          @setState {
+            drawerOpen: false
+            gameState: @game.state
+          }
+
+      @createDrawerButton "newGameS", BugReportIcon, "New Game: Spiderette", =>
+        if confirm('Start a new Spiderette game?')
+          @game.newGame('spiderette')
+          @setState {
+            drawerOpen: false
+            gameState: @game.state
+          }
+    ]
+
+    if fullscreen.available()
+      drawerItems.push el Divider, { key: "fullscreenDivider" }
+      drawerItems.push @createDrawerButton "fullscreen", BugReportIcon, "Toggle Fullscreen", =>
+        fullscreen.toggle()
+        @setState {
+          drawerOpen: false
+        }
+
     drawer = el Drawer, {
       key: 'drawer'
       anchor: 'right'
@@ -94,25 +120,7 @@ class App extends Component
       }, [
         el List, {
           key: 'drawerList'
-        }, [
-          @createDrawerButton "newGameK", AcUnitIcon, "New Game: Klondike", =>
-            if confirm('Start a new Klondike game?')
-              @game.newGame('klondike')
-              @setState {
-                drawerOpen: false
-                gameState: @game.state
-              }
-
-          @createDrawerButton "newGameS", BugReportIcon, "New Game: Spiderette", =>
-            if confirm('Start a new Spiderette game?')
-              @game.newGame('spiderette')
-              @setState {
-                drawerOpen: false
-                gameState: @game.state
-              }
-
-          # el Divider, { key: "drawerDiv1" }
-        ]
+        }, drawerItems
       ]
     ]
 
