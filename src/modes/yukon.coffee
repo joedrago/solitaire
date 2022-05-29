@@ -16,10 +16,17 @@ mode =
     the build rules.Spaces in columns are filled only with kings.
 
     There is no redeal.
+
+    | HARD MODE:
+
+    Easy - Columns are built on any other suit.
+
+    Hard - Columns are built on alternating colors.
   """
 
   newGame: ->
     @state =
+      hard: @hard
       draw:
         pos: 'none'
         cards: []
@@ -86,7 +93,11 @@ mode =
             # Moving into work
             dst = @state.work[outerIndex]
 
-            if cardutils.validMove(src, dst, cardutils.VALIDMOVE_DESCENDING | cardutils.VALIDMOVE_ANY_OTHER_SUIT | cardutils.VALIDMOVE_EMPTY_KINGS_ONLY)
+            if @state.hard
+              validFlags = cardutils.VALIDMOVE_DESCENDING | cardutils.VALIDMOVE_ALTERNATING_COLOR | cardutils.VALIDMOVE_EMPTY_KINGS_ONLY
+            else
+              validFlags = cardutils.VALIDMOVE_DESCENDING | cardutils.VALIDMOVE_ANY_OTHER_SUIT | cardutils.VALIDMOVE_EMPTY_KINGS_ONLY
+            if cardutils.validMove(src, dst, validFlags)
               for c in src
                 dst.push c
               @eatSelection()

@@ -18,10 +18,17 @@ mode =
     if desired, thus making the card below it playable also.
 
     Unlimited redeals are allowed.
+
+    | HARD MODE:
+
+    Easy - Cards are flipped 3 cards at a time with unlimited redeals.
+
+    Hard - Cards are flipped 1 card at a time with no redeals.
   """
 
   newGame: ->
     @state =
+      hard: @hard
       draw:
         pos: 'top'
         cards: []
@@ -30,7 +37,7 @@ mode =
         outerIndex: 0
         innerIndex: 0
       pile:
-        show: 3
+        show: if @hard then 1 else 3
         cards: []
       foundations: [cardutils.GUIDE, cardutils.GUIDE, cardutils.GUIDE, cardutils.GUIDE]
       work: []
@@ -56,7 +63,7 @@ mode =
       # -------------------------------------------------------------------------------------------
       when 'draw'
         # Draw some cards
-        if @state.draw.cards.length == 0
+        if !@state.hard and (@state.draw.cards.length == 0)
           @state.draw.cards = @state.pile.cards
           @state.pile.cards = []
         else

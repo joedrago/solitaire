@@ -19,12 +19,14 @@ import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
+import Switch from '@mui/material/Switch'
 
 import GamesIcon from '@mui/icons-material/Games'
 import FullscreenIcon from '@mui/icons-material/Fullscreen'
 import MenuIcon from '@mui/icons-material/Menu'
 import BookIcon from '@mui/icons-material/Book'
 import ReplayIcon from '@mui/icons-material/Replay'
+import SickIcon from '@mui/icons-material/Sick'
 
 import Snackbar from '@mui/material/Snackbar'
 
@@ -47,6 +49,7 @@ class App extends Component
       drawerOpen: false
       winToastOpen: false
       helpOpen: false
+      hard: @game.hard
 
   componentDidMount: ->
     window.addEventListener("resize", @onResize.bind(this))
@@ -57,7 +60,30 @@ class App extends Component
       height: window.innerHeight
     }
 
-  createDrawerButton: (keyBase, iconClass, text, onClick) ->
+  createDrawerButton: (keyBase, iconClass, text, onClick, switchValue = null) ->
+    buttonPieces = [
+      el ListItemIcon, {
+        key: "#{keyBase}ItemIcon"
+      }, [
+        el iconClass, {
+          key: "#{keyBase}Icon"
+        }
+      ]
+      el ListItemText, {
+        key: "#{keyBase}Text"
+        primary: text
+      }, []
+    ]
+    if switchValue?
+      buttonPieces.push el Switch, {
+        key: "#{keyBase}Switch"
+        color: 'secondary'
+        edge: "end"
+        checked: switchValue
+        # onChange={handleToggle('wifi')}
+        # checked={checked.indexOf('wifi') !== -1}
+      }
+
     return el ListItem, {
       key: "#{keyBase}Item"
       disablePadding: true
@@ -65,19 +91,7 @@ class App extends Component
       el ListItemButton, {
         key: "#{keyBase}Button"
         onClick: onClick
-      }, [
-        el ListItemIcon, {
-          key: "#{keyBase}ItemIcon"
-        }, [
-          el iconClass, {
-            key: "#{keyBase}Icon"
-          }
-        ]
-        el ListItemText, {
-          key: "#{keyBase}Text"
-          primary: text
-        }, []
-      ]
+      }, buttonPieces
     ]
 
   render: ->
@@ -104,6 +118,13 @@ class App extends Component
         helpOpen: true
         drawerOpen: false
       }
+    drawerItems.push @createDrawerButton "hardMenu", SickIcon, "Hard Mode", =>
+      @game.hard = !@game.hard
+      @game.save()
+      @setState {
+        hard: @game.hard
+      }
+    , @game.hard
     drawerItems.push el Divider, { key: "helpDivider" }
 
     for modeName, mode of @game.modes
@@ -231,6 +252,17 @@ class App extends Component
       ]
     ]
 
+    gameText = el 'div', {
+      key: 'bottomRightName'
+      style:
+        position: 'fixed'
+        right: 10
+        bottom: 10
+        fontFamily: 'monospace'
+        fontSize: '1.2em'
+        color: '#fff'
+    }, [ "#{@game.modes[@game.mode].name}: #{if @game.state.hard then 'Hard' else 'Easy'}" ]
+
     return el 'div', {
         key: 'appcontainer'
       }, [
@@ -239,6 +271,7 @@ class App extends Component
       menuButton
       winToast
       helpDialog
+      gameText
     ]
 
   gameClick: (type, outerIndex, innerIndex, isRightClick, isMouseUp) ->

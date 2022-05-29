@@ -19,10 +19,17 @@ mode =
     possible. Empty spaces in columns may be filled with any cards.
 
     There is no redeal.
+
+    | HARD MODE:
+
+    Easy - 2 cards face down in the first 4 columns. Fill empties with any cards.
+
+    Hard - 3 cards face down in the first 4 columns. Fill empties with Kings only.
   """
 
   newGame: ->
     @state =
+      hard: @hard
       draw:
         pos: 'bottom'
         cards: []
@@ -37,12 +44,18 @@ mode =
       work: []
 
     deck = cardutils.shuffle([0...52])
+    if @hard
+      faceDownCount = 3
+      faceUpCount = 4
+    else
+      faceDownCount = 2
+      faceUpCount = 5
     for columnIndex in [0...7]
       col = []
       if columnIndex < 4
-        for i in [0...2]
+        for i in [0...faceDownCount]
           col.push(deck.shift() | cardutils.FLIP_FLAG)
-        for i in [0...5]
+        for i in [0...faceUpCount]
           col.push(deck.shift())
       else
         for i in [0...7]
@@ -79,7 +92,10 @@ mode =
           # Moving into work
           dst = @state.work[outerIndex]
 
-          if cardutils.validMove(src, dst, cardutils.VALIDMOVE_DESCENDING | cardutils.VALIDMOVE_MATCHING_SUIT)
+          validFlags = cardutils.VALIDMOVE_DESCENDING | cardutils.VALIDMOVE_MATCHING_SUIT
+          if @state.hard
+            validFlags |= cardutils.VALIDMOVE_EMPTY_KINGS_ONLY
+          if cardutils.validMove(src, dst, validFlags)
             for c in src
               dst.push c
             @eatSelection()

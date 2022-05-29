@@ -20,10 +20,17 @@ mode =
     in columns may be filled with any available card or build.
 
     There is no redeal.
+
+    | HARD MODE:
+
+    Easy - 2 cards are dealt face down to columns.
+
+    Hard - 3 cards are dealt face down to columns.
   """
 
   newGame: ->
     @state =
+      hard: @hard
       draw:
         pos: 'bottom'
         cards: []
@@ -38,9 +45,10 @@ mode =
       work: []
 
     deck = cardutils.shuffle([0...52])
+    faceDownCount = if @hard then 3 else 2
     for columnIndex in [0...7]
       col = []
-      for i in [0...3]
+      for i in [0...faceDownCount]
         col.push(deck.shift() | cardutils.FLIP_FLAG)
       col.push(deck.shift())
       @state.work.push col

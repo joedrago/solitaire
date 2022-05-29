@@ -7,6 +7,7 @@ class SolitaireGame
     @saveTimeout = null
     @state = null
     @mode = 'klondike'
+    @hard = false # this is the toggle for the *next* game. Check @state.hard to see if *this* game is hard
 
     @modes = {}
     @loadMode('klondike')
@@ -57,6 +58,7 @@ class SolitaireGame
       return false
 
     @mode = payload.mode
+    @hard = payload.hard == true
     @state = payload.state
     console.log "Loaded."
     return true
@@ -66,6 +68,7 @@ class SolitaireGame
 
     payload =
       mode: @mode
+      hard: @hard
       state: @state
     localStorage.setItem('save', JSON.stringify(payload))
     console.log "Saved."
