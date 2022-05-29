@@ -41,6 +41,7 @@ mode =
         cards: []
       foundations: [cardutils.GUIDE, cardutils.GUIDE, cardutils.GUIDE, cardutils.GUIDE]
       work: []
+      start: null
 
     deck = cardutils.shuffle([0...52])
     for columnIndex in [0...7]

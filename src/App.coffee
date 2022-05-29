@@ -48,6 +48,7 @@ class App extends Component
       gameState: @game.state
       drawerOpen: false
       winToastOpen: false
+      loseToastOpen: false
       helpOpen: false
       hard: @game.hard
 
@@ -193,7 +194,7 @@ class App extends Component
             winToastOpen: false
             gameState: @game.state
           }
-      }, ['Play Again']
+      }, ['Play Again?']
     ]
 
     winToast = el Snackbar, {
@@ -208,6 +209,38 @@ class App extends Component
       onClose: =>
         @setState {
           winToastOpen: false
+        }
+    }
+
+    loseToastAction = el React.Fragment, {
+      key: 'loseToastFragment'
+    }, [
+      el Button, {
+        key: 'loseToastButton'
+        color: 'primary'
+        size: 'small'
+        onClick: =>
+          @game.newGame()
+          @setState {
+            drawerOpen: false
+            loseToastOpen: false
+            gameState: @game.state
+          }
+      }, ['Play Again?']
+    ]
+
+    loseToast = el Snackbar, {
+      key: 'loseToast'
+      open: @state.loseToastOpen
+      autoHideDuration: 10000
+      anchorOrigin:
+        vertical: 'top'
+        horizontal: 'center'
+      message: "You Lose."
+      action: loseToastAction
+      onClose: =>
+        @setState {
+          loseToastOpen: false
         }
     }
 
@@ -261,6 +294,7 @@ class App extends Component
         fontFamily: 'monospace'
         fontSize: '1.2em'
         color: '#fff'
+        textShadow: '2px 2px #000'
     }, [ "#{@game.modes[@game.mode].name}: #{if @game.state.hard then 'Hard' else 'Easy'}" ]
 
     return el 'div', {
@@ -270,6 +304,7 @@ class App extends Component
       gameView
       menuButton
       winToast
+      loseToast
       helpDialog
       gameText
     ]
@@ -279,6 +314,7 @@ class App extends Component
     @setState {
       gameState: @game.state
       winToastOpen: @game.won()
+      loseToastOpen: @game.lost()
     }
 
 export default App

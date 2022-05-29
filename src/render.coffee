@@ -139,7 +139,7 @@ export card = (key, raw, x, y, scale, isSelected, selectOffsetX, selectOffsetY, 
       e.stopPropagation()
       # onClick(e.pageX, e.pageY, true, false)
     onMouseDown: (e) ->
-      console.log e
+      # console.log e
       if stopPropagation
         e.stopPropagation()
       onClick(e.pageX, e.pageY, e.button == 2, false)

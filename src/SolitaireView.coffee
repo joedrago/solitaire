@@ -21,12 +21,15 @@ class SolitaireView extends Component
       selectOffsetY: 0
       selectMaxOffsetX: 0
       selectMaxOffsetY: 0
+      now: 0
+
+    @timer = null
 
   tooCloseToDrag: ->
     dragDistanceSquared = ((@state.selectMaxOffsetX * @state.selectMaxOffsetX) + (@state.selectMaxOffsetY * @state.selectMaxOffsetY))
     tooClose = TOO_CLOSE_TO_DRAG_NORMALIZED * @renderScalePixels
     tooCloseSquared = tooClose * tooClose
-    console.log "dragDistance: #{Math.sqrt(dragDistanceSquared).toFixed(2)}, tooClose: #{tooClose}"
+    # console.log "dragDistance: #{Math.sqrt(dragDistanceSquared).toFixed(2)}, tooClose: #{tooClose}"
     return dragDistanceSquared < tooCloseSquared
 
   cardClick: (type, outerIndex, innerIndex, x, y, isRightClick, isMouseUp) ->
@@ -78,8 +81,42 @@ class SolitaireView extends Component
     }
     @props.app.gameClick('background', 0, 0, isRightClick, false)
 
+  adjustTimer: (gameState) ->
+    if gameState.timerStart? and not gameState.timerEnd?
+      if not @timer?
+        @timer = setInterval =>
+          @setState {
+            now: cardutils.now()
+          }
+        , 500
+    else
+      if @timer?
+        clearInterval(@timer)
+        @timer = null
+
+  prettyTime: (t, showMS = false) ->
+    zp = (t) ->
+      if t < 10
+        return "0" + t
+      return String(t)
+    zpp = (t) ->
+      if t < 10
+        return "00" + t
+      if t < 100
+        return "0" + t
+      return String(t)
+
+    minutes = Math.floor(t / 60000)
+    t -= minutes * 60000
+    seconds = Math.floor(t / 1000)
+    t -= seconds * 1000
+    if showMS
+      return "#{zp(minutes)}:#{zp(seconds)}.#{zpp(t)}"
+    return "#{zp(minutes)}:#{zp(seconds)}"
+
   render: ->
     gameState = @props.gameState
+    @adjustTimer(gameState)
 
     # Calculate necessary table extents, pretending a card is 1.0 units tall
     # "top area"  = top draw pile, foundation piles (both can be absent)
@@ -136,12 +173,18 @@ class SolitaireView extends Component
     #     height: maxHeightPixels * renderScale
     # }
 
-    if gameState.draw.pos == 'top'
+    if (gameState.draw.pos == 'top') or (gameState.draw.pos == 'middle')
+      if gameState.draw.pos == 'top'
+        drawOffsetL = 0
+        drawOffsetT = 0
+      else
+        drawOffsetL = ((maxWidth / 2) - 1) * @renderScalePixels
+        drawOffsetT = 2.3 * @renderScalePixels
       # Top Left Draw Pile
       drawCard = cardutils.BACK
       if gameState.draw.cards.length == 0
         drawCard = cardutils.GUIDE
-      renderedCards.push(render.card 'draw', drawCard, renderOffsetL + (@renderScalePixels * CENTER_CARD_MARGIN), renderOffsetT, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
+      renderedCards.push(render.card 'draw', drawCard, drawOffsetL + renderOffsetL + (@renderScalePixels * CENTER_CARD_MARGIN), drawOffsetT + renderOffsetT, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
           @cardClick('draw', 0, 0, x, y, isRightClick, isMouseUp)
       )
 
@@ -151,11 +194,11 @@ class SolitaireView extends Component
       startPileIndex = gameState.pile.cards.length - pileRenderCount
 
       if startPileIndex > 0
-        renderedCards.push(render.card "pileundercard", gameState.pile.cards[startPileIndex-1], renderOffsetL + ((1 + CENTER_CARD_MARGIN) * @renderScalePixels), renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
+        renderedCards.push(render.card "pileundercard", gameState.pile.cards[startPileIndex-1], drawOffsetL + renderOffsetL + ((1 + CENTER_CARD_MARGIN) * @renderScalePixels), drawOffsetT + renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
           # clicking on the pile undercard does nothing
         )
       else
-        renderedCards.push(render.card "pileguide", cardutils.GUIDE, renderOffsetL + ((1 + CENTER_CARD_MARGIN) * @renderScalePixels), renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
+        renderedCards.push(render.card "pileguide", cardutils.GUIDE, drawOffsetL + renderOffsetL + ((1 + CENTER_CARD_MARGIN) * @renderScalePixels), drawOffsetT + renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
           # clicking on the pile guide does nothing
         )
 
@@ -165,7 +208,7 @@ class SolitaireView extends Component
         if (gameState.selection.type == 'pile') and (pileIndex == (gameState.pile.cards.length - 1))
           isSelected = true
         do (pile, pileIndex, isSelected) =>
-          renderedCards.push(render.card "pile#{pileIndex}", pile, renderOffsetL + ((1 + CENTER_CARD_MARGIN + ((pileIndex - startPileIndex) * PILE_CARD_OVERLAP)) * @renderScalePixels), renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
+          renderedCards.push(render.card "pile#{pileIndex}", pile, drawOffsetL + renderOffsetL + ((1 + CENTER_CARD_MARGIN + ((pileIndex - startPileIndex) * PILE_CARD_OVERLAP)) * @renderScalePixels), drawOffsetT + renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
               @cardClick('pile', pileIndex, 0, x, y, isRightClick, isMouseUp)
           )
 
@@ -208,6 +251,25 @@ class SolitaireView extends Component
       renderedCards.push(render.card 'draw', drawCard, renderOffsetL, (maxHeight - 0.35) * @renderScalePixels, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
           @cardClick('draw', 0, 0, x, y, isRightClick, isMouseUp)
       )
+
+    if gameState.timerStart? and gameState.timerColor?
+      endTime = gameState.timerEnd
+      if not endTime?
+        endTime = cardutils.now()
+      timeToShow = endTime - gameState.timerStart
+      renderedCards.push el 'div', {
+        key: 'timer'
+        style:
+          position: 'fixed'
+          textAlign: 'center'
+          left: "0px"
+          width: '100%'
+          top: "#{3.5 * @renderScalePixels}px"
+          fontFamily: 'monospace'
+          fontSize: "#{@renderScalePixels * 0.1}px"
+          color: gameState.timerColor
+          textShadow: '2px 2px #000'
+      }, [ @prettyTime(timeToShow, gameState.timerEnd?) ]
 
     return el 'div', {
       key: 'bg'

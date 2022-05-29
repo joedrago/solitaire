@@ -94,4 +94,7 @@ export descending = (src, dst, emptyAcceptsOnlyKings = false) ->
 
   return true
 
+export now = ->
+  return Math.floor(Date.now())
+
 export { calcInfo as info }

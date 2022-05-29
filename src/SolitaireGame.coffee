@@ -10,6 +10,7 @@ class SolitaireGame
     @hard = false # this is the toggle for the *next* game. Check @state.hard to see if *this* game is hard
 
     @modes = {}
+    @loadMode('golf')
     @loadMode('klondike')
     @loadMode('scorpion')
     @loadMode('spiderette')
@@ -26,6 +27,7 @@ class SolitaireGame
       newGame: true
       click: true
       won: true
+      lost: true
 
     modeProps =
       name: true
@@ -103,6 +105,11 @@ class SolitaireGame
   won: ->
     if @modes[@mode]?
       return @modes[@mode].won()
+    return false
+
+  lost: ->
+    if @modes[@mode]? and @modes[@mode].lost?
+      return @modes[@mode].lost()
     return false
 
   # -----------------------------------------------------------------------------------------------
