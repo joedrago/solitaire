@@ -115,6 +115,8 @@ mode =
         return false
       for c, cIndex in work
         info = cardutils.info(c)
+        if info.flip
+          return false
         if info.value != (12 - cIndex)
           # console.log "column #{workIndex} card #{cIndex} breaks the pattern"
           return false
