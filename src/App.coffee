@@ -27,6 +27,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import BookIcon from '@mui/icons-material/Book'
 import ReplayIcon from '@mui/icons-material/Replay'
 import SickIcon from '@mui/icons-material/Sick'
+import UndoIcon from '@mui/icons-material/Undo'
 
 import Snackbar from '@mui/material/Snackbar'
 
@@ -61,7 +62,7 @@ class App extends Component
       height: window.innerHeight
     }
 
-  createDrawerButton: (keyBase, iconClass, text, onClick, switchValue = null) ->
+  createDrawerButton: (keyBase, iconClass, text, onClick, switchValue = null, disabled = false) ->
     buttonPieces = [
       el ListItemIcon, {
         key: "#{keyBase}ItemIcon"
@@ -73,7 +74,7 @@ class App extends Component
       el ListItemText, {
         key: "#{keyBase}Text"
         primary: text
-      }, []
+        }, []
     ]
     if switchValue?
       buttonPieces.push el Switch, {
@@ -92,6 +93,7 @@ class App extends Component
       el ListItemButton, {
         key: "#{keyBase}Button"
         onClick: onClick
+        disabled: disabled
       }, buttonPieces
     ]
 
@@ -144,6 +146,14 @@ class App extends Component
         @setState {
           drawerOpen: false
         }
+
+    drawerItems.push el Divider, { key: "undoDivider" }
+    drawerItems.push @createDrawerButton "undoButton", UndoIcon, "Undo", =>
+      @game.undo()
+      @setState {
+        gameState: @game.state
+      }
+    , null, !@game.canUndo()
 
     drawer = el Drawer, {
       key: 'drawer'

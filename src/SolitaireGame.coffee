@@ -8,6 +8,7 @@ class SolitaireGame
     @state = null
     @mode = 'klondike'
     @hard = false # this is the toggle for the *next* game. Check @state.hard to see if *this* game is hard
+    @undoStack = []
 
     @modes = {}
     @loadMode('golf')
@@ -62,6 +63,7 @@ class SolitaireGame
     @mode = payload.mode
     @hard = payload.hard == true
     @state = payload.state
+    @undoStack = []
     console.log "Loaded."
     return true
 
@@ -87,6 +89,20 @@ class SolitaireGame
     # , 3000
 
   # -----------------------------------------------------------------------------------------------
+  # Undo
+
+  canUndo: ->
+    return @undoStack.length > 0
+
+  pushUndo: ->
+    @undoStack.push JSON.stringify(@state)
+
+  undo: ->
+    if @undoStack.length > 0
+      @state = JSON.parse(@undoStack.pop())
+      @queueSave()
+
+  # -----------------------------------------------------------------------------------------------
   # Generic input handlers
 
   newGame: (newMode = null) ->
@@ -94,11 +110,14 @@ class SolitaireGame
       @mode = newMode
     if @modes[@mode]?
       @modes[@mode].newGame()
+      @undoStack = []
       @save()
 
   click: (type, outerIndex = 0, innerIndex = 0, isRightClick = false, isMouseUp = false) ->
     console.log "game.click(#{type}, #{outerIndex}, #{innerIndex}, #{isRightClick}, #{isMouseUp})"
     if @modes[@mode]?
+      if not isMouseUp
+        @pushUndo()
       @modes[@mode].click(type, outerIndex, innerIndex, isRightClick, isMouseUp)
       @queueSave()
 
