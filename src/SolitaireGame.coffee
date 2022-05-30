@@ -14,6 +14,7 @@ class SolitaireGame
     @loadMode('golf')
     @loadMode('klondike')
     @loadMode('scorpion')
+    @loadMode('spider')
     @loadMode('spiderette')
     @loadMode('yukon')
 
