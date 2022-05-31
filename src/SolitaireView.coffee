@@ -11,6 +11,15 @@ CENTER_CARD_MARGIN = 0.5 * (render.CARD_HEIGHT - render.CARD_WIDTH) / render.CAR
 # Coefficient for the height of the card
 TOO_CLOSE_TO_DRAG_NORMALIZED = 0.2
 
+# this represents the *minimum* height the game will scale to
+MINIMUM_SCALE_IN_CARD_HEIGHTS = 12
+tmpMinScale = cardutils.qs('min')
+if tmpMinScale?
+  tmpMinScale = parseInt(tmpMinScale)
+  if tmpMinScale >= 1
+    MINIMUM_SCALE_IN_CARD_HEIGHTS = tmpMinScale
+
+
 class SolitaireView extends Component
   constructor: ->
     super()
@@ -122,7 +131,7 @@ class SolitaireView extends Component
     # "top area"  = top draw pile, foundation piles (both can be absent)
     # "work area" = work piles
 
-    largestWork = 12 # this represents the *minimum* height the game will scale to
+    largestWork = MINIMUM_SCALE_IN_CARD_HEIGHTS
     for w in gameState.work
       if largestWork < w.length
         largestWork = w.length

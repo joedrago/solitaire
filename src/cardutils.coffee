@@ -97,4 +97,14 @@ export descending = (src, dst, emptyAcceptsOnlyKings = false) ->
 export now = ->
   return Math.floor(Date.now())
 
+export qs = (name) ->
+  url = window.location.href
+  name = name.replace(/[\[\]]/g, '\\$&')
+  regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)')
+  results = regex.exec(url);
+  if not results or not results[2]
+    return null
+  return decodeURIComponent(results[2].replace(/\+/g, ' '))
+
+
 export { calcInfo as info }
