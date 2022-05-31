@@ -181,7 +181,7 @@ class App extends Component
         position: 'fixed'
         top: '10px'
         right: '10px'
-        color: '#aaa'
+        color: '#000'
       onClick: =>
         @setState {
           drawerOpen: true
