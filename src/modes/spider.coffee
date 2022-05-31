@@ -71,14 +71,15 @@ mode =
         kingInfo = null
         for raw, rawIndex in work
           info = cardutils.info(raw)
+          if kingPos >= 0
+            if (info.value != 12 - rawIndex + kingPos) or (info.suit != kingInfo.suit)
+              kingPos = -1
+              kingInfo = null
+
           if kingPos < 0
             if (info.value == 12) and not info.flip
               kingPos = rawIndex
               kingInfo = info
-          else
-            if (info.value != 12 - rawIndex + kingPos) or (info.suit != kingInfo.suit)
-              kingPos = -1
-              kingInfo = null
 
           if (kingPos >= 0) and ((rawIndex - kingPos) == 12)
             foundOne = true
