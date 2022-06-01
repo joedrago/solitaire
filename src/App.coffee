@@ -52,7 +52,7 @@ class App extends Component
       loseToastOpen: false
       helpOpen: false
       hard: @game.hard
-      useTouch: navigator.maxTouchPoints? and (navigator.maxTouchPoints > 0)
+      useTouch: false # navigator.maxTouchPoints? and (navigator.maxTouchPoints > 0)
 
   componentDidMount: ->
     window.addEventListener("resize", @onResize.bind(this))
