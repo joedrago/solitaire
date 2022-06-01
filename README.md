@@ -2,6 +2,19 @@
 
 ### A collection of solitaire games written in CoffeeScript and React.
 
+## Tips
+
+* The menu to do all kinds of things is the black menu button in the top right.
+  * Use the Rule Help button after starting a game you've never played to learn how to play.
+  * There is a Toggle Fullscreen button in there (if the browser supports it).
+  * It even has unlimited Undo in there!
+
+* The Hard Mode switch is for the next game only, and does not change the difficulty of the current game on the fly.
+  * You can always see the current game/difficulty in the bottom right.
+
+* Spiderette and Golf on Easy mode tends to be the easiest games to play/win,
+  whereas Klondike and Spider (especially on Hard Mode!) are quite hard.
+
 ## Build Distribution
 
 * Clone the repo
