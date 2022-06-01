@@ -81,7 +81,7 @@ export CARD_ASPECT_RATIO = CARD_WIDTH / CARD_HEIGHT
 # How much must you drag in a direction before it starts to visually show the drag
 DRAG_SNAP_PIXELS = 10
 
-export card = (key, raw, x, y, scale, isSelected, selectOffsetX, selectOffsetY, onClick) ->
+export card = (view, key, raw, x, y, scale, isSelected, selectOffsetX, selectOffsetY, type, outerIndex, innerIndex, onClick, onOther) ->
   foundationOnly = isSelected == "foundationOnly"
   if foundationOnly
     isSelected = true
@@ -123,29 +123,48 @@ export card = (key, raw, x, y, scale, isSelected, selectOffsetX, selectOffsetY, 
     if foundationOnly
       cardStyle.border = "4px solid rgba(255, 255, 0, 1)"
 
-    if (selectOffsetX != 0) or (selectOffsetY != 0)
+    if not view.state.useTouch and ((selectOffsetX != 0) or (selectOffsetY != 0))
       stopPropagation = false
       cardStyle.pointerEvents = 'none'
 
-  return el 'img', {
+  imageProps =
     key: key
     src: url
+    "data-soltype": type
+    "data-solouter": outerIndex
+    "data-solinner": innerIndex
     draggable: false
-    onClick: (e) ->
+    style: cardStyle
+
+  if view.props.useTouch
+    imageProps.onTouchStart = (e) ->
+      e.stopPropagation()
+      onClick(type, outerIndex, innerIndex, e.changedTouches[0].pageX, e.changedTouches[0].pageY, false, false)
+    imageProps.onTouchEnd = (e) ->
+      e.stopPropagation()
+      target = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY)
+
+      dataType = target.dataset.soltype
+      dataOuterIndex = target.dataset.solouter
+      dataInnerIndex = target.dataset.solinner
+      if dataType? and dataOuterIndex? and dataInnerIndex?
+        onClick(dataType, parseInt(dataOuterIndex), parseInt(dataInnerIndex), e.changedTouches[0].pageX, e.changedTouches[0].pageY, false, true)
+      else
+        onOther(false)
+  else
+    imageProps.onClick = (e) ->
       if stopPropagation
         e.stopPropagation()
-    onContextMenu: (e) ->
+    imageProps.onContextMenu = (e) ->
       e.preventDefault()
       e.stopPropagation()
-      # onClick(e.pageX, e.pageY, true, false)
-    onMouseDown: (e) ->
-      # console.log e
+    imageProps.onMouseDown = (e) ->
       if stopPropagation
         e.stopPropagation()
-      onClick(e.pageX, e.pageY, e.button == 2, false)
-    onMouseUp: (e) ->
+      onClick(type, outerIndex, innerIndex, e.pageX, e.pageY, e.button == 2, false)
+    imageProps.onMouseUp = (e) ->
       if stopPropagation
         e.stopPropagation()
-      onClick(e.pageX, e.pageY, e.button == 2, true)
-    style: cardStyle
-  }
+      onClick(type, outerIndex, innerIndex, e.pageX, e.pageY, e.button == 2, true)
+
+  return el 'img', imageProps

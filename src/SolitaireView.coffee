@@ -19,6 +19,7 @@ if tmpMinScale?
   if tmpMinScale >= 1
     MINIMUM_SCALE_IN_CARD_HEIGHTS = tmpMinScale
 
+noop = ->
 
 class SolitaireView extends Component
   constructor: ->
@@ -193,9 +194,7 @@ class SolitaireView extends Component
       drawCard = cardutils.BACK
       if gameState.draw.cards.length == 0
         drawCard = cardutils.GUIDE
-      renderedCards.push(render.card 'draw', drawCard, drawOffsetL + renderOffsetL + (@renderScalePixels * CENTER_CARD_MARGIN), drawOffsetT + renderOffsetT, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
-          @cardClick('draw', 0, 0, x, y, isRightClick, isMouseUp)
-      )
+      renderedCards.push(render.card this, 'draw', drawCard, drawOffsetL + renderOffsetL + (@renderScalePixels * CENTER_CARD_MARGIN), drawOffsetT + renderOffsetT, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, 'draw', 0, 0, @cardClick.bind(this), @onBackground.bind(this))
 
       pileRenderCount = gameState.pile.cards.length
       if pileRenderCount > gameState.pile.show
@@ -203,13 +202,9 @@ class SolitaireView extends Component
       startPileIndex = gameState.pile.cards.length - pileRenderCount
 
       if startPileIndex > 0
-        renderedCards.push(render.card "pileundercard", gameState.pile.cards[startPileIndex-1], drawOffsetL + renderOffsetL + ((1 + CENTER_CARD_MARGIN) * @renderScalePixels), drawOffsetT + renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
-          # clicking on the pile undercard does nothing
-        )
+        renderedCards.push(render.card this, "pileundercard", gameState.pile.cards[startPileIndex-1], drawOffsetL + renderOffsetL + ((1 + CENTER_CARD_MARGIN) * @renderScalePixels), drawOffsetT + renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, 'pile', 0, 0, noop, @onBackground.bind(this))
       else
-        renderedCards.push(render.card "pileguide", cardutils.GUIDE, drawOffsetL + renderOffsetL + ((1 + CENTER_CARD_MARGIN) * @renderScalePixels), drawOffsetT + renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
-          # clicking on the pile guide does nothing
-        )
+        renderedCards.push(render.card this, "pileguide", cardutils.GUIDE, drawOffsetL + renderOffsetL + ((1 + CENTER_CARD_MARGIN) * @renderScalePixels), drawOffsetT + renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, 'pile', 0, 0, noop, @onBackground.bind(this))
 
       for pileIndex in [startPileIndex...gameState.pile.cards.length]
         pile = gameState.pile.cards[pileIndex]
@@ -217,29 +212,21 @@ class SolitaireView extends Component
         if (gameState.selection.type == 'pile') and (pileIndex == (gameState.pile.cards.length - 1))
           isSelected = true
         do (pile, pileIndex, isSelected) =>
-          renderedCards.push(render.card "pile#{pileIndex}", pile, drawOffsetL + renderOffsetL + ((1 + CENTER_CARD_MARGIN + ((pileIndex - startPileIndex) * PILE_CARD_OVERLAP)) * @renderScalePixels), drawOffsetT + renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
-              @cardClick('pile', pileIndex, 0, x, y, isRightClick, isMouseUp)
-          )
+          renderedCards.push(render.card this, "pile#{pileIndex}", pile, drawOffsetL + renderOffsetL + ((1 + CENTER_CARD_MARGIN + ((pileIndex - startPileIndex) * PILE_CARD_OVERLAP)) * @renderScalePixels), drawOffsetT + renderOffsetT, renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, 'pile', pileIndex, 0, @cardClick.bind(this), @onBackground.bind(this))
 
     currentL = renderOffsetL + ((foundationOffsetL + CENTER_CARD_MARGIN) * @renderScalePixels)
     for foundation, foundationIndex in gameState.foundations
       do (foundation, foundationIndex) =>
-        renderedCards.push(render.card "foundguide#{foundationIndex}", cardutils.GUIDE, currentL, renderOffsetT, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
-          @cardClick('foundation', foundationIndex, 0, x, y, isRightClick, isMouseUp)
-        )
+        renderedCards.push(render.card this, "foundguide#{foundationIndex}", cardutils.GUIDE, currentL, renderOffsetT, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, 'foundation', foundationIndex, 0, @cardClick.bind(this), @onBackground.bind(this))
       if foundation != cardutils.GUIDE
         do (foundation, foundationIndex) =>
-          renderedCards.push(render.card "found#{foundationIndex}", foundation, currentL, renderOffsetT, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
-            @cardClick('foundation', foundationIndex, 0, x, y, isRightClick, isMouseUp)
-          )
+          renderedCards.push(render.card this, "found#{foundationIndex}", foundation, currentL, renderOffsetT, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, 'foundation', foundationIndex, 0, @cardClick.bind(this), @onBackground.bind(this))
       currentL += @renderScalePixels
 
     currentL = renderOffsetL + (CENTER_CARD_MARGIN * @renderScalePixels)
     for workColumn, workColumnIndex in gameState.work
       do (workColumnIndex, workIndex) =>
-        renderedCards.push(render.card "workguide#{workColumnIndex}_#{workIndex}", cardutils.GUIDE, currentL, workTop * @renderScalePixels, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
-          @cardClick('work', workColumnIndex, -1, x, y, isRightClick, isMouseUp)
-        )
+        renderedCards.push(render.card this, "workguide#{workColumnIndex}_#{workIndex}", cardutils.GUIDE, currentL, workTop * @renderScalePixels, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, 'work', workColumnIndex, -1, @cardClick.bind(this), @onBackground.bind(this))
       for work, workIndex in workColumn
         isSelected = false
         if (gameState.selection.type == 'work') and (workColumnIndex == gameState.selection.outerIndex) and (workIndex >= gameState.selection.innerIndex)
@@ -247,9 +234,7 @@ class SolitaireView extends Component
           if gameState.selection.foundationOnly
             isSelected = "foundationOnly"
         do (work, workColumnIndex, workIndex, isSelected) =>
-          renderedCards.push(render.card "work#{workColumnIndex}_#{workIndex}", work, currentL, ((workTop + (workIndex * WORK_CARD_OVERLAP)) * @renderScalePixels), renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
-            @cardClick('work', workColumnIndex, workIndex, x, y, isRightClick, isMouseUp)
-          )
+          renderedCards.push(render.card this, "work#{workColumnIndex}_#{workIndex}", work, currentL, ((workTop + (workIndex * WORK_CARD_OVERLAP)) * @renderScalePixels), renderScale, isSelected, @state.selectOffsetX, @state.selectOffsetY, 'work', workColumnIndex, workIndex, @cardClick.bind(this), @onBackground.bind(this))
       currentL += @renderScalePixels
 
     if gameState.draw.pos == 'bottom'
@@ -257,9 +242,7 @@ class SolitaireView extends Component
       drawCard = cardutils.BACK
       if gameState.draw.cards.length == 0
         drawCard = cardutils.GUIDE
-      renderedCards.push(render.card 'draw', drawCard, renderOffsetL, (maxHeight - 0.35) * @renderScalePixels, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, (x, y, isRightClick, isMouseUp) =>
-          @cardClick('draw', 0, 0, x, y, isRightClick, isMouseUp)
-      )
+      renderedCards.push(render.card this, 'draw', drawCard, renderOffsetL, (maxHeight - 0.35) * @renderScalePixels, renderScale, false, @state.selectOffsetX, @state.selectOffsetY, 'draw', 0, 0, @cardClick.bind(this), @onBackground.bind(this))
 
     if gameState.timerStart? and gameState.timerColor?
       endTime = gameState.timerEnd
@@ -280,7 +263,7 @@ class SolitaireView extends Component
           textShadow: '2px 2px #000'
       }, [ @prettyTime(timeToShow, gameState.timerEnd?) ]
 
-    return el 'div', {
+    bgProps =
       key: 'bg'
       style:
         zIndex: -1
@@ -288,15 +271,27 @@ class SolitaireView extends Component
         width: @props.width
         height: @props.height
 
-      onContextMenu: (e) =>
+    if @props.useTouch
+      bgProps.onTouchStart = (e) =>
+        if e.touches.length == 1
+          @onBackground(false)
+      bgProps.onTouchEnd = (e) =>
+        if e.touches.length == 0
+          @onBackground(false)
+      bgProps.onTouchMove = (e) =>
+        if e.touches.length == 1
+          @onMouseMove(e.touches[0].clientX, e.touches[0].clientY)
+    else
+      bgProps.onContextMenu = (e) =>
         e.preventDefault()
         # @onBackground(true)
-      onMouseDown: =>
+      bgProps.onMouseDown = =>
         @onBackground(false)
-      onMouseUp: =>
+      bgProps.onMouseUp = =>
         @onBackground(false)
-      onMouseMove: (e) =>
+      bgProps.onMouseMove = (e) =>
         @onMouseMove(e.clientX, e.clientY)
-    }, renderedCards
+
+    return el 'div', bgProps, renderedCards
 
 export default SolitaireView

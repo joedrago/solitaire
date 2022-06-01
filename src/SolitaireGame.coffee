@@ -76,7 +76,7 @@ class SolitaireGame
       hard: @hard
       state: @state
     localStorage.setItem('save', JSON.stringify(payload))
-    console.log "Saved."
+    # console.log "Saved."
 
   queueSave: ->
     # Don't bother queueing, just save immediately

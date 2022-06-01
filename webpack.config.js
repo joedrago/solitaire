@@ -1,4 +1,5 @@
 const path = require('path')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
   module: {
@@ -11,11 +12,11 @@ module.exports = {
         }
       },
       {
-       test: /\.(html|png|svg)/,
-       type: 'asset/resource',
-       generator: {
-         filename: '[name][ext]'
-       }
+        test: /\.(png|svg|webmanifest)/,
+        type: 'asset/resource',
+        generator: {
+          filename: '[name][ext]'
+        }
       }
     ],
   },
@@ -24,7 +25,7 @@ module.exports = {
   },
   entry: './src/boot.coffee',
   output: {
-    filename: 'main.js',
+    filename: 'main-[fullhash].js',
     path: path.resolve(__dirname, 'dist'),
     clean: true
   },
@@ -32,5 +33,9 @@ module.exports = {
   devtool: 'source-map',
   devServer: {
     static: './dist',
-  }
+  },
+  plugins: [new HtmlWebpackPlugin({
+    template: "src/index.html",
+    filename: "index.html"
+  })]
 }

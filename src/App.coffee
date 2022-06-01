@@ -52,9 +52,19 @@ class App extends Component
       loseToastOpen: false
       helpOpen: false
       hard: @game.hard
+      useTouch: navigator.maxTouchPoints? and (navigator.maxTouchPoints > 0)
 
   componentDidMount: ->
     window.addEventListener("resize", @onResize.bind(this))
+
+    if not @state.useTouch
+      touchDetector = =>
+        console.log "Solitaire: touch detected! Switching to touch mode."
+        window.removeEventListener('touchstart', touchDetector, false)
+        @setState {
+          useTouch: true
+        }
+      window.addEventListener 'touchstart', touchDetector
 
   onResize: ->
     @setState {
@@ -104,6 +114,7 @@ class App extends Component
       app: this
       width: @state.width
       height: @state.height
+      useTouch: @state.useTouch
     }
 
     drawerItems = []
