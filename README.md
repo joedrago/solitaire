@@ -17,7 +17,7 @@
 
 * Clone the repo
 * `npm install`
-* `npm run prod`
+* `npm run build`
 * Serve the `dist/` directory with your favorite static web server
 
 ## Develop
