@@ -346,7 +346,7 @@ class SolitaireView extends Component
         key: 'draw'
         raw: drawCard
         x: renderOffsetL
-        y: (maxHeight - 0.35) * @renderScalePixels
+        y: @props.height - (0.35 * @renderScalePixels)
         selected: false
         type: 'draw'
         outerIndex: 0
