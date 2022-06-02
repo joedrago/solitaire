@@ -129,7 +129,7 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
     if foundationOnly
       cardStyle.border = "4px solid rgba(255, 255, 0, 1)"
 
-    if not renderInfo.view.props.useTouch and ((renderInfo.view.state.selectOffsetX != 0) or (renderInfo.view.state.selectOffsetY != 0))
+    if (renderInfo.view.state.selectOffsetX != 0) or (renderInfo.view.state.selectOffsetY != 0)
       stopPropagation = false
       cardStyle.pointerEvents = 'none'
 
