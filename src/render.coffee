@@ -78,17 +78,23 @@ export CARD_WIDTH = 119
 export CARD_HEIGHT = 162
 export CARD_ASPECT_RATIO = CARD_WIDTH / CARD_HEIGHT
 
-# How much must you drag in a direction before it starts to visually show the drag
-DRAG_SNAP_PIXELS = 10
+export card = (cardInfo, renderInfo, listenerInfo) ->
+  type = cardInfo.type
+  outerIndex = cardInfo.outerIndex
+  innerIndex = cardInfo.innerIndex
+  onClick = listenerInfo.onClick
+  onOther = listenerInfo.onOther
 
-export card = (view, key, raw, x, y, scale, isSelected, selectOffsetX, selectOffsetY, type, outerIndex, innerIndex, onClick, onOther) ->
+  isSelected = cardInfo.selected
   foundationOnly = isSelected == "foundationOnly"
   if foundationOnly
     isSelected = true
 
-  if isSelected and ((Math.abs(selectOffsetX) > DRAG_SNAP_PIXELS) or (Math.abs(selectOffsetY) > DRAG_SNAP_PIXELS))
-    x += selectOffsetX
-    y += selectOffsetY
+  x = cardInfo.x
+  y = cardInfo.y
+  if isSelected and ((Math.abs(renderInfo.view.state.selectOffsetX) > renderInfo.dragSnapPixels) or (Math.abs(renderInfo.view.state.selectOffsetY) > renderInfo.dragSnapPixels))
+    x += renderInfo.view.state.selectOffsetX + renderInfo.view.state.selectAdditionalOffsetX
+    y += renderInfo.view.state.selectOffsetY + renderInfo.view.state.selectAdditionalOffsetY
 
   cardStyle =
     position: 'fixed'
@@ -97,18 +103,18 @@ export card = (view, key, raw, x, y, scale, isSelected, selectOffsetX, selectOff
     width: CARD_WIDTH
     height: CARD_HEIGHT
     transformOrigin: "top left"
-    transform: "scale(#{scale})"
+    transform: "scale(#{renderInfo.scale})"
 
-  if raw == cardutils.GUIDE
+  if cardInfo.raw == cardutils.GUIDE
     url = cardGuide
     val = 0
     suit = 0
-  else if (raw == cardutils.BACK) || ((raw & cardutils.FLIP_FLAG) == cardutils.FLIP_FLAG)
+  else if (cardInfo.raw == cardutils.BACK) || ((cardInfo.raw & cardutils.FLIP_FLAG) == cardutils.FLIP_FLAG)
     url = cardBack
     val = 0
     suit = 0
   else
-    raw = raw & ~cardutils.FLIP_FLAG
+    raw = cardInfo.raw & ~cardutils.FLIP_FLAG
     url = CARD_URLS[raw]
     val = raw % 13
     suit = Math.floor(raw / 13)
@@ -123,12 +129,12 @@ export card = (view, key, raw, x, y, scale, isSelected, selectOffsetX, selectOff
     if foundationOnly
       cardStyle.border = "4px solid rgba(255, 255, 0, 1)"
 
-    if not view.state.useTouch and ((selectOffsetX != 0) or (selectOffsetY != 0))
+    if not renderInfo.view.props.useTouch and ((renderInfo.view.state.selectOffsetX != 0) or (renderInfo.view.state.selectOffsetY != 0))
       stopPropagation = false
       cardStyle.pointerEvents = 'none'
 
   imageProps =
-    key: key
+    key: cardInfo.key
     src: url
     "data-soltype": type
     "data-solouter": outerIndex
@@ -136,7 +142,7 @@ export card = (view, key, raw, x, y, scale, isSelected, selectOffsetX, selectOff
     draggable: false
     style: cardStyle
 
-  if view.props.useTouch
+  if renderInfo.view.props.useTouch
     imageProps.onTouchStart = (e) ->
       e.stopPropagation()
       onClick(type, outerIndex, innerIndex, e.changedTouches[0].pageX, e.changedTouches[0].pageY, false, false)
