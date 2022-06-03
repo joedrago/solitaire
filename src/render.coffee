@@ -59,6 +59,9 @@ import card50 from "./cards/50.svg"
 import card51 from "./cards/51.svg"
 import cardBack from "./cards/back.svg"
 import cardGuide from "./cards/guide.svg"
+import cardReserve from "./cards/reserve.svg"
+import cardDead from "./cards/dead.svg"
+import cardReady from "./cards/ready.svg"
 
 CARD_URLS = [ card0, card1, card2, card3, card4, card5, card6, card7, card8, card9,
 card10, card11, card12, card13, card14, card15, card16, card17, card18,
@@ -67,8 +70,16 @@ card28, card29, card30, card31, card32, card33, card34, card35, card36,
 card37, card38, card39, card40, card41, card42, card43, card44, card45,
 card46, card47, card48, card49, card50, card51 ]
 
+OTHER_CARDS = [
+  cardBack
+  cardGuide
+  cardReserve
+  cardDead
+  cardReady
+]
+
 window.solitairePreloadedImages = []
-for preloadUrl in CARD_URLS
+for preloadUrl in CARD_URLS.concat(OTHER_CARDS)
   # console.log "Preloading: #{preloadUrl}"
   img = new Image()
   img.src = preloadUrl
@@ -92,9 +103,12 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
 
   x = cardInfo.x
   y = cardInfo.y
-  if isSelected and ((Math.abs(renderInfo.view.state.selectOffsetX) > renderInfo.dragSnapPixels) or (Math.abs(renderInfo.view.state.selectOffsetY) > renderInfo.dragSnapPixels))
-    x += renderInfo.view.state.selectOffsetX + renderInfo.view.state.selectAdditionalOffsetX
-    y += renderInfo.view.state.selectOffsetY + renderInfo.view.state.selectAdditionalOffsetY
+  if isSelected
+    x -= 1
+    y -= 1
+    if (Math.abs(renderInfo.view.state.selectOffsetX) > renderInfo.dragSnapPixels) or (Math.abs(renderInfo.view.state.selectOffsetY) > renderInfo.dragSnapPixels)
+      x += renderInfo.view.state.selectOffsetX + renderInfo.view.state.selectAdditionalOffsetX
+      y += renderInfo.view.state.selectOffsetY + renderInfo.view.state.selectAdditionalOffsetY
 
   cardStyle =
     position: 'fixed'
@@ -107,6 +121,18 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
 
   if cardInfo.raw == cardutils.GUIDE
     url = cardGuide
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.RESERVE
+    url = cardReserve
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.DEAD
+    url = cardDead
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.READY
+    url = cardReady
     val = 0
     suit = 0
   else if (cardInfo.raw == cardutils.BACK) || ((cardInfo.raw & cardutils.FLIP_FLAG) == cardutils.FLIP_FLAG)
@@ -127,7 +153,7 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
     # cardStyle.filter = "invert(0.8)"
     cardStyle.border = "2px solid rgba(128, 128, 255, 1)"
     if foundationOnly
-      cardStyle.border = "4px solid rgba(255, 255, 0, 1)"
+      cardStyle.border = "2px solid rgba(255, 255, 0, 1)"
 
     if (renderInfo.view.state.selectOffsetX != 0) or (renderInfo.view.state.selectOffsetY != 0)
       stopPropagation = false

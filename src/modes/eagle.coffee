@@ -1,61 +1,80 @@
 import * as cardutils from '../cardutils'
 
 mode =
-  name: "Klondike"
+  name: "Eagle Wing"
   help: """
     | GOAL:
 
-    Build the foundations up in suit from ace to king.
+    Build the foundations up, in suit, from the rank of the first card played in the foundation,
+    untill all cards of the suit have been played, wrapping from king to ace as necessary.
 
     | PLAY:
 
-    Cards are flipped 3 at a time to a waste pile. Columns are built down, in
-    alternating colors. All packed cards in a column must be moved as a unit
-    to other columns.
+    The reserve is dealt 14 cards to begin with. Empty spaces in columns are filled automatically
+    from the reserve. If there are no cards left in the reserve, empty spaces of columns can be
+    filled with any available card.
 
-    The topmost card of any column or the waste pile may be moved to a
-    foundation. The top card of the waste pile may also be moved to a column
-    if desired, thus making the card below it playable also.
+    Build columns down and in suit, wrapping as necessary. There is a 3 card maximum for colums.
+    Cards from the reserve, waste pile, and packed cards from other columns may be moved to a column.
 
-    Unlimited redeals are allowed.
+    There is one redeal.
 
     | HARD MODE:
 
-    Easy - Cards are flipped 3 cards at a time with unlimited redeals.
+    Easy - 14 cards in the reserve pile.
 
-    Hard - Cards are flipped 1 card at a time with no redeals.
+    Hard - 17 cards in the reserve pile.
   """
 
   newGame: ->
     @state =
       hard: @hard
       draw:
-        pos: 'top'
+        pos: 'middle'
+        redeals: 1
         cards: []
       selection:
         type: 'none'
         outerIndex: 0
         innerIndex: 0
       pile:
-        show: if @hard then 1 else 3
+        show: 1
         cards: []
       foundations: [cardutils.GUIDE, cardutils.GUIDE, cardutils.GUIDE, cardutils.GUIDE]
       work: []
+      reserve:
+        pos: 'middle'
+        cols: [[]]
 
     deck = cardutils.shuffle([0...52])
-    for columnIndex in [0...7]
-      col = []
-      for i in [0...columnIndex]
-        col.push(deck.shift() | cardutils.FLIP_FLAG)
-      col.push(deck.shift())
-      @state.work.push col
 
+    for columnIndex in [0...8]
+      @state.work[columnIndex] = [deck.shift()]
+
+    reserveCount = 14
+    if @hard
+      reserveCount = 17
+    for columnIndex in [0...reserveCount]
+      @state.reserve.cols[0].push deck.shift()
+
+    @state.foundations[0] = deck.shift()
+    foundationInfo = cardutils.info(@state.foundations[0])
+    @state.foundationBase = foundationInfo.value
+    @state.centerDisplay = foundationInfo.valueName
     @state.draw.cards = deck
+
+  eagleDealReserve: ->
+    for work, workIndex in @state.work
+      if @state.reserve.cols[0].length < 1
+        break
+      if work.length == 0
+        work.push @state.reserve.cols[0].pop()
 
   click: (type, outerIndex, innerIndex, isRightClick, isMouseUp) ->
     if isRightClick
       if not isMouseUp
         @sendHome(type, outerIndex, innerIndex)
+        @eagleDealReserve()
       @select('none')
       return
 
@@ -64,8 +83,10 @@ mode =
       when 'draw'
         # Draw some cards
         if !@state.hard and (@state.draw.cards.length == 0)
-          @state.draw.cards = @state.pile.cards
-          @state.pile.cards = []
+          if @state.draw.redeals > 0
+            @state.draw.redeals -= 1
+            @state.draw.cards = @state.pile.cards
+            @state.pile.cards = []
         else
           cardsToDraw = @state.pile.show
           if cardsToDraw > @state.draw.cards.length
@@ -80,6 +101,11 @@ mode =
         @select('pile')
 
       # -------------------------------------------------------------------------------------------
+      when 'reserve'
+        # Selecting the top card on the draw pile
+        @select('reserve', 0, @state.reserve.cols[0].length - 1)
+
+      # -------------------------------------------------------------------------------------------
       when 'foundation', 'work'
         # Potential selections or destinations
         src = @getSelection()
@@ -91,13 +117,13 @@ mode =
               break
             srcInfo = cardutils.info(src[0])
             if @state.foundations[outerIndex] < 0 # empty
-              if srcInfo.value != 0 # Ace
+              if srcInfo.value != @state.foundationBase
                 break
             else
               dstInfo = cardutils.info(@state.foundations[outerIndex])
               if srcInfo.suit != dstInfo.suit
                 break
-              if srcInfo.value != dstInfo.value + 1
+              if (srcInfo.value != dstInfo.value + 1) and (srcInfo.value != dstInfo.value - 12)
                 break
 
             @state.foundations[outerIndex] = src[0]
@@ -116,10 +142,11 @@ mode =
               return
 
             dst = @state.work[outerIndex]
-            if cardutils.validMove(src, dst, cardutils.VALIDMOVE_DESCENDING | cardutils.VALIDMOVE_ALTERNATING_COLOR | cardutils.VALIDMOVE_EMPTY_KINGS_ONLY)
-              for c in src
-                dst.push c
-              @eatSelection()
+            if (dst.length + src.length) <= 3 # Eagle Wing has a pile max of 3
+              if (dst.length == 0) or cardutils.validMove(src, dst, cardutils.VALIDMOVE_DESCENDING_WRAP | cardutils.VALIDMOVE_MATCHING_SUIT | cardutils.VALIDMOVE_DISALLOW_STACKING_FOUNDATION_BASE, @state.foundationBase)
+                for c in src
+                  dst.push c
+                @eatSelection()
 
             @select('none')
           else if sameWorkPile and isMouseUp
@@ -157,7 +184,9 @@ mode =
         # Probably a background click, just forget the selection
         @select('none')
 
+    @eagleDealReserve()
+
   won: ->
-    return (@state.draw.cards.length == 0) and (@state.pile.cards.length == 0) and @workPileEmpty()
+    return (@state.draw.cards.length == 0) and (@state.pile.cards.length == 0) and (@state.reserve.cols[0].length == 0) and @workPileEmpty()
 
 export default mode

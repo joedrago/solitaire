@@ -1,7 +1,7 @@
 import * as cardutils from '../cardutils'
 
 mode =
-  name: "Klondike"
+  name: "Baker's Dozen"
   help: """
     | GOAL:
 
@@ -9,28 +9,26 @@ mode =
 
     | PLAY:
 
-    Cards are flipped 3 at a time to a waste pile. Columns are built down, in
-    alternating colors. All packed cards in a column must be moved as a unit
-    to other columns.
+    Build columns down regardless of suit. Only the topmost card may be moved
+    to another column which meets the build requirements. Empty columns must
+    stay empty.
 
-    The topmost card of any column or the waste pile may be moved to a
-    foundation. The top card of the waste pile may also be moved to a column
-    if desired, thus making the card below it playable also.
+    The topmost card of any column may be moved to a foundation.
 
-    Unlimited redeals are allowed.
+    Kings are always dealt to the bottom of columns.
 
     | HARD MODE:
 
-    Easy - Cards are flipped 3 cards at a time with unlimited redeals.
+    Easy - All cards are dealt face up.
 
-    Hard - Cards are flipped 1 card at a time with no redeals.
+    Hard - The last non-King card is face down in each column.
   """
 
   newGame: ->
     @state =
       hard: @hard
       draw:
-        pos: 'top'
+        pos: 'none'
         cards: []
       selection:
         type: 'none'
@@ -42,13 +40,22 @@ mode =
       foundations: [cardutils.GUIDE, cardutils.GUIDE, cardutils.GUIDE, cardutils.GUIDE]
       work: []
 
-    deck = cardutils.shuffle([0...52])
-    for columnIndex in [0...7]
-      col = []
-      for i in [0...columnIndex]
+    # shuffle the deck, but shuffle kings separately
+    deck = cardutils.shuffle([0...12].concat([13...25]).concat([26...38]).concat([39...51]))
+    kings = cardutils.shuffle([12, 25, 38, 51])
+
+    for columnIndex in [0...13]
+      @state.work.push []
+
+    kingPositions = cardutils.shuffle([0...13]).slice(0, 4)
+    for p, pIndex in kingPositions
+      @state.work[p].push kings[pIndex]
+    for columnIndex in [0...13]
+      col = @state.work[columnIndex]
+      if @hard
         col.push(deck.shift() | cardutils.FLIP_FLAG)
-      col.push(deck.shift())
-      @state.work.push col
+      while col.length < 4
+        col.push(deck.shift())
 
     @state.draw.cards = deck
 
@@ -111,15 +118,12 @@ mode =
           if (src.length > 0) and not sameWorkPile
             # Moving into work
 
-            if @state.selection.foundationOnly
-              @select('none')
-              return
-
             dst = @state.work[outerIndex]
-            if cardutils.validMove(src, dst, cardutils.VALIDMOVE_DESCENDING | cardutils.VALIDMOVE_ALTERNATING_COLOR | cardutils.VALIDMOVE_EMPTY_KINGS_ONLY)
-              for c in src
-                dst.push c
-              @eatSelection()
+            if dst.length > 0 # Empty piles must stay empty
+              if cardutils.validMove(src, dst, cardutils.VALIDMOVE_DESCENDING)
+                for c in src
+                  dst.push c
+                @eatSelection()
 
             @select('none')
           else if sameWorkPile and isMouseUp
@@ -127,28 +131,10 @@ mode =
           else
             # Selecting a fresh column
             col = @state.work[outerIndex]
-            wasClickingLastCard = innerIndex == col.length - 1
-
-            innerIndex = 0 # "All packed cards in a column must be moved as a unit to other columns."
-            while (innerIndex < col.length) and (col[innerIndex] & cardutils.FLIP_FLAG)
-              # Don't select face down cards
-              innerIndex += 1
-
-            stopIndex = innerIndex
-            innerIndex = col.length - 1
-            while innerIndex > stopIndex
-              lowerInfo = cardutils.info(col[innerIndex])
-              upperInfo = cardutils.info(col[innerIndex - 1])
-              if lowerInfo.value != upperInfo.value - 1
-                break
-              innerIndex -= 1
-
-            isClickingLastCard = innerIndex == col.length - 1
-
-            if wasClickingLastCard and not isClickingLastCard
-              @select(type, outerIndex, col.length - 1)
-              @state.selection.foundationOnly = true
+            if col.length < 1
+              @select('none')
             else
+              innerIndex = col.length - 1
               @select(type, outerIndex, innerIndex)
 
 

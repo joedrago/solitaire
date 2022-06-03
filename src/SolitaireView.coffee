@@ -79,7 +79,7 @@ class SolitaireView extends Component
     if not isMouseUp
       type = @props.app.state.gameState.selection.type
       if type != 'none'
-        console.log "gamestate ", @props.app.state.gameState
+        # console.log "gamestate ", @props.app.state.gameState
         innerIndex = @props.app.state.gameState.selection.innerIndex
         outerIndex = @props.app.state.gameState.selection.outerIndex
 
@@ -166,9 +166,7 @@ class SolitaireView extends Component
         largestWork = w.length
 
     topWidth = gameState.foundations.length
-    # foundationOffsetL = 0
-    # if gameState.draw.pos == 'top'
-    foundationOffsetL = 3
+    foundationOffsetL = gameState.work.length - gameState.foundations.length
     topWidth += foundationOffsetL
 
     workWidth = gameState.work.length
@@ -215,13 +213,18 @@ class SolitaireView extends Component
       if gameState.draw.pos == 'top'
         drawOffsetL = 0
         drawOffsetT = 0
+      else if gameState.reserve? and (gameState.reserve.pos == 'middle')
+        drawOffsetL = 1 * @renderScalePixels
+        drawOffsetT = 3 * @renderScalePixels
       else
         drawOffsetL = ((maxWidth / 2) - 1) * @renderScalePixels
         drawOffsetT = 2.3 * @renderScalePixels
       # Top Left Draw Pile
       drawCard = cardutils.BACK
       if gameState.draw.cards.length == 0
-        drawCard = cardutils.GUIDE
+        drawCard = cardutils.READY
+        if gameState.draw.redeals == 0
+          drawCard = cardutils.DEAD
       cardInfo =
         key: 'draw'
         raw: drawCard
@@ -353,6 +356,45 @@ class SolitaireView extends Component
         innerIndex: 0
       @renderCard(cardInfo, renderInfo, listenerInfo)
 
+    if gameState.reserve?
+      if gameState.reserve.pos == 'middle'
+        drawOffsetL = ((maxWidth / 2) - 0.5) * @renderScalePixels
+        drawOffsetT = 3 * @renderScalePixels
+      else
+        drawOffsetL = 0
+        drawOffsetT = 0
+
+      for col, colIndex in gameState.reserve.cols
+        drawCard = cardutils.RESERVE
+        if col.length > 1
+          drawCard = col[col.length - 2]
+        cardInfo =
+          key: "reserveguide#{colIndex}"
+          raw: drawCard
+          x: drawOffsetL + renderOffsetL + (@renderScalePixels * (colIndex + CENTER_CARD_MARGIN))
+          y: drawOffsetT + renderOffsetT
+          selected: false
+          type: 'reserve'
+          outerIndex: 0
+          innerIndex: 0
+        @renderCard(cardInfo, renderInfo, listenerInfo)
+
+        if col.length > 0
+          reserveIndex = col.length - 1
+          isSelected = false
+          if (gameState.selection.type == 'reserve') and (colIndex == gameState.selection.outerIndex) and (reserveIndex >= gameState.selection.innerIndex)
+            isSelected = true
+          cardInfo =
+            key: "reserve#{colIndex}"
+            raw: col[reserveIndex]
+            x: drawOffsetL + renderOffsetL + (@renderScalePixels * (colIndex + CENTER_CARD_MARGIN))
+            y: drawOffsetT + renderOffsetT
+            selected: isSelected
+            type: 'reserve'
+            outerIndex: colIndex
+            innerIndex: reserveIndex
+          @renderCard(cardInfo, renderInfo, listenerInfo)
+
     if gameState.timerStart? and gameState.timerColor?
       endTime = gameState.timerEnd
       if not endTime?
@@ -370,7 +412,24 @@ class SolitaireView extends Component
           fontSize: "#{@renderScalePixels * 0.1}px"
           color: gameState.timerColor
           textShadow: '2px 2px #000'
+          pointerEvents: 'none'
       }, [ @prettyTime(timeToShow, gameState.timerEnd?) ]
+
+    if gameState.centerDisplay?
+      @renderedCards.push el 'div', {
+        key: 'timer'
+        style:
+          position: 'fixed'
+          textAlign: 'center'
+          left: "0px"
+          width: '100%'
+          top: "#{0.5 * @renderScalePixels}px"
+          fontFamily: 'monospace'
+          fontSize: "#{@renderScalePixels * 0.2}px"
+          color: '#6a6'
+          textShadow: '2px 2px #000'
+          pointerEvents: 'none'
+      }, [ gameState.centerDisplay ]
 
     bgProps =
       key: 'bg'

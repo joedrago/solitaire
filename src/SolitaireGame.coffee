@@ -11,6 +11,8 @@ class SolitaireGame
     @undoStack = []
 
     @modes = {}
+    @loadMode('baker')
+    @loadMode('eagle')
     @loadMode('golf')
     @loadMode('klondike')
     @loadMode('scorpion')
@@ -172,6 +174,9 @@ class SolitaireGame
       when 'pile'
         if @state.pile.cards.length > 0
           src = @state.pile.cards[@state.pile.cards.length - 1]
+      when 'reserve'
+        if @state.reserve? and (@state.reserve.cols.length > outerIndex) and (@state.reserve.cols[outerIndex].length > 0)
+          src = @state.reserve.cols[outerIndex][@state.reserve.cols[outerIndex].length - 1]
       when 'work'
         srcCol = @state.work[outerIndex]
         if innerIndex != srcCol.length - 1
@@ -187,10 +192,13 @@ class SolitaireGame
       sendHome = false
       if @state.foundations[dstIndex] >= 0
         dstInfo = cardutils.info(@state.foundations[dstIndex])
-        if srcInfo.value == dstInfo.value + 1
+        if (srcInfo.value == dstInfo.value + 1) or (srcInfo.value == dstInfo.value - 12)
           sendHome = true
       else
-        if srcInfo.value == 0 # Ace
+        foundationBase = 0 # Ace
+        if @state.foundationBase?
+          foundationBase = @state.foundationBase
+        if srcInfo.value == foundationBase
           sendHome = true
 
       if sendHome
@@ -198,6 +206,8 @@ class SolitaireGame
         switch type
           when 'pile'
             @state.pile.cards.pop()
+          when 'reserve'
+            @state.reserve.cols[outerIndex].pop()
           when 'work'
             srcCol.pop()
             if srcCol.length > 0
@@ -226,6 +236,9 @@ class SolitaireGame
     switch @state.selection.type
       when 'pile'
         @state.pile.cards.pop()
+      when 'reserve'
+        if @state.reserve?
+          @state.reserve.cols[@state.selection.outerIndex].pop()
       when 'work'
         srcCol = @state.work[@state.selection.outerIndex]
         while @state.selection.innerIndex < srcCol.length
@@ -233,6 +246,7 @@ class SolitaireGame
         if srcCol.length > 0
           # reveal any face down cards
           srcCol[srcCol.length - 1] = srcCol[srcCol.length - 1] & ~cardutils.FLIP_FLAG
+    @select('none')
 
   getSelection: ->
     selectedCards = []
@@ -240,6 +254,11 @@ class SolitaireGame
       when 'pile'
         if @state.pile.cards.length > 0
           selectedCards.push @state.pile.cards[@state.pile.cards.length - 1]
+      when 'reserve'
+        if @state.reserve?
+          col = @state.reserve.cols[@state.selection.outerIndex]
+          if col.length > 0
+            selectedCards.push col[col.length - 1]
       when 'work'
         srcCol = @state.work[@state.selection.outerIndex]
         index = @state.selection.innerIndex

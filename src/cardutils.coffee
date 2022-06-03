@@ -1,5 +1,8 @@
 export BACK = -1
 export GUIDE = -2
+export RESERVE = -3
+export DEAD = -4
+export READY = -5
 export FLIP_FLAG = 1024
 
 export shuffle = (array) ->
@@ -11,24 +14,26 @@ export shuffle = (array) ->
   return array
 
 calcInfo = (raw) ->
-  if raw == BACK
+  if raw < 0
     info =
-      value: BACK
-      suit: BACK
-      flip: true
-      red: false
-  else if raw == GUIDE
-    info =
-      value: GUIDE
-      suit: GUIDE
-      flip: false
+      value: raw
+      suit: raw
+      flip: raw == BACK
       red: false
   else
     flip = (raw & FLIP_FLAG) == FLIP_FLAG
     raw = raw & ~FLIP_FLAG
     suit = Math.floor(raw / 13)
+    value = raw % 13
+    valueName = switch value
+      when 0 then 'A'
+      when 10 then 'J'
+      when 11 then 'Q'
+      when 12 then 'K'
+      else "#{value+1}"
     info =
-      value: raw % 13
+      value: value
+      valueName: valueName
       suit: suit
       flip: flip
       red: (suit > 1)
@@ -36,12 +41,14 @@ calcInfo = (raw) ->
 
 
 export VALIDMOVE_DESCENDING = (1 << 0)
-export VALIDMOVE_ALTERNATING_COLOR = (1 << 1)
-export VALIDMOVE_ANY_OTHER_SUIT = (1 << 2)
-export VALIDMOVE_MATCHING_SUIT = (1 << 3)
-export VALIDMOVE_EMPTY_KINGS_ONLY = (1 << 4)
+export VALIDMOVE_DESCENDING_WRAP = (1 << 1)
+export VALIDMOVE_ALTERNATING_COLOR = (1 << 2)
+export VALIDMOVE_ANY_OTHER_SUIT = (1 << 3)
+export VALIDMOVE_MATCHING_SUIT = (1 << 4)
+export VALIDMOVE_EMPTY_KINGS_ONLY = (1 << 5)
+export VALIDMOVE_DISALLOW_STACKING_FOUNDATION_BASE = (1 << 6)
 
-export validMove = (src, dst, validMoveFlags) ->
+export validMove = (src, dst, validMoveFlags, foundationBase = null) ->
   srcInfo = calcInfo(src[0])
 
   if dst.length == 0
@@ -58,6 +65,10 @@ export validMove = (src, dst, validMoveFlags) ->
   if (validMoveFlags & VALIDMOVE_ANY_OTHER_SUIT) and (srcInfo.suit == dstInfo.suit)
     return false
   if (validMoveFlags & VALIDMOVE_DESCENDING) and (srcInfo.value != dstInfo.value - 1)
+    return false
+  if (validMoveFlags & VALIDMOVE_DESCENDING_WRAP) and ((srcInfo.value != dstInfo.value - 1) and (srcInfo.value != dstInfo.value + 12))
+    return false
+  if (validMoveFlags & VALIDMOVE_DISALLOW_STACKING_FOUNDATION_BASE) and (dstInfo.value == foundationBase)
     return false
 
   return true
