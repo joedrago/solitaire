@@ -11,6 +11,7 @@ class SolitaireGame
     @undoStack = []
 
     @modes = {}
+    @loadMode('baker')
     @loadMode('golf')
     @loadMode('klondike')
     @loadMode('scorpion')
