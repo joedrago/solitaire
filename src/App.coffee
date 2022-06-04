@@ -119,13 +119,20 @@ class App extends Component
 
     drawerItems = []
 
+    drawerItems.push @createDrawerButton "undoButton", UndoIcon, "Undo", =>
+      @game.undo()
+      @setState {
+        gameState: @game.state
+      }
+    , null, !@game.canUndo()
+    drawerItems.push el Divider, { key: "undoDivider" }
+
     drawerItems.push @createDrawerButton "playAgainMenu", ReplayIcon, "Play Again: #{@game.modes[@game.mode].name}", =>
       @game.newGame()
       @setState {
         drawerOpen: false
         gameState: @game.state
       }
-    drawerItems.push el Divider, { key: "playAgainDivider" }
 
     drawerItems.push @createDrawerButton "helpMenu", BookIcon, "Rule Help: #{@game.modes[@game.mode].name}", =>
       @setState {
@@ -157,14 +164,6 @@ class App extends Component
         @setState {
           drawerOpen: false
         }
-
-    drawerItems.push el Divider, { key: "undoDivider" }
-    drawerItems.push @createDrawerButton "undoButton", UndoIcon, "Undo", =>
-      @game.undo()
-      @setState {
-        gameState: @game.state
-      }
-    , null, !@game.canUndo()
 
     drawer = el Drawer, {
       key: 'drawer'
