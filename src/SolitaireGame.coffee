@@ -13,6 +13,7 @@ class SolitaireGame
     @modes = {}
     @loadMode('baker')
     @loadMode('eagle')
+    @loadMode('freecell')
     @loadMode('golf')
     @loadMode('klondike')
     @loadMode('scorpion')
@@ -165,6 +166,14 @@ class SolitaireGame
   workPileEmpty: ->
     for work in @state.work
       if work.length > 0
+        return false
+    return true
+
+  reserveEmpty: ->
+    if not @state.reserve?
+      return true
+    for cols in @state.reserve.cols
+      if cols.length > 0
         return false
     return true
 

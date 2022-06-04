@@ -316,7 +316,7 @@ class App extends Component
         fontSize: '1.2em'
         color: '#fff'
         textShadow: '2px 2px #000'
-    }, [ "#{@game.modes[@game.mode].name}: #{if @game.state.hard then 'Hard' else 'Easy'}" ]
+    }, [ "#{@game.modes[@game.mode].name}#{if @game.state.hard then ' (Hard)' else ''}" ]
 
     return el 'div', {
         key: 'appcontainer'

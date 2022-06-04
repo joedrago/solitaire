@@ -375,8 +375,8 @@ class SolitaireView extends Component
           y: drawOffsetT + renderOffsetT
           selected: false
           type: 'reserve'
-          outerIndex: 0
-          innerIndex: 0
+          outerIndex: colIndex
+          innerIndex: -1
         @renderCard(cardInfo, renderInfo, listenerInfo)
 
         if col.length > 0
