@@ -160,7 +160,9 @@ class SolitaireView extends Component
     # "top area"  = top draw pile, foundation piles (both can be absent)
     # "work area" = work piles
 
-    largestWork = MINIMUM_SCALE_IN_CARD_HEIGHTS
+    largestWork = 3
+    if not @props.useTouch
+      largestWork = MINIMUM_SCALE_IN_CARD_HEIGHTS
     for w in gameState.work
       if largestWork < w.length
         largestWork = w.length
