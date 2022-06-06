@@ -177,7 +177,7 @@ class SolitaireView extends Component
     if (gameState.draw.pos == 'top') or (gameState.foundations.length > 0)
       workTop = 1.25
     workBottom = workTop + 1 + ((largestWork - 1) * WORK_CARD_OVERLAP)
-    if (workBottom < 4.1) and ((gameState.draw.pos == 'middle') or (gameState.reserve.pos == 'middle'))
+    if (workBottom < 4.1) and ((gameState.draw.pos == 'middle') or (gameState.reserve? and (gameState.reserve.pos == 'middle')))
       # Leave room for draw/reserve at the bottom of the screen
       workBottom = 4.1
 
