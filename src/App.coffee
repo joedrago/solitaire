@@ -111,6 +111,7 @@ class App extends Component
     gameView = el SolitaireView, {
       key: 'gameview'
       gameState: @state.gameState
+      canAutoWin: @game.canAutoWin()
       app: this
       width: @state.width
       height: @state.height
@@ -336,5 +337,14 @@ class App extends Component
       winToastOpen: @game.won()
       loseToastOpen: @game.lost()
     }
+
+  sendAny: ->
+    sent = @game.sendAny()
+    @setState {
+      gameState: @game.state
+      winToastOpen: @game.won()
+      loseToastOpen: @game.lost()
+    }
+    return sent
 
 export default App

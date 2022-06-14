@@ -177,6 +177,38 @@ class SolitaireGame
         return false
     return true
 
+  canAutoWin: ->
+    if @won()
+      # console.log "canAutoWin: false (won)"
+      return false
+    if @state.foundations.length == 0
+      # console.log "canAutoWin: false (no foundations)"
+      return false
+    if @state.draw.cards.length > 0
+      # console.log "canAutoWin: false (has draw)"
+      return false
+    if @state.pile.cards.length > 0
+      # console.log "canAutoWin: false (has pile)"
+      return false
+    if @state.reserve?
+      for col in @state.reserve.cols
+        if col.length > 0
+          # console.log "canAutoWin: false (has reserves)"
+          return false
+    for col, colIndex in @state.work
+      last = 100
+      for raw in col
+        if raw & cardutils.FLIP_FLAG
+          # console.log "canAutoWin: false (has flip)"
+          return false
+        info = cardutils.info(raw)
+        if info.value > last
+          # console.log "canAutoWin: false (not descending #{colIndex})"
+          return false
+        last = info.value
+    # console.log "canAutoWin: true"
+    return true
+
   sendHome: (type, outerIndex, innerIndex) ->
     src = null
     switch type
@@ -224,6 +256,16 @@ class SolitaireGame
               srcCol[srcCol.length - 1] = srcCol[srcCol.length - 1] & ~cardutils.FLIP_FLAG
         @select('none')
         return true
+    return false
+
+  sendAny: ->
+    if not @canAutoWin()
+      return false
+    for work, workIndex in @state.work
+      if work.length > 0
+        if @sendHome('work', workIndex, work.length - 1)
+          @queueSave()
+          return true
     return false
 
   # -----------------------------------------------------------------------------------------------

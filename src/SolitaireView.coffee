@@ -3,11 +3,16 @@ import { el } from './reactutils'
 import * as render from './render'
 import * as cardutils from './cardutils'
 
+import IconButton from '@mui/material/IconButton'
+import PlayIcon from '@mui/icons-material/PlayCircle'
+
 UNIT = render.CARD_HEIGHT
 PILE_CARD_OVERLAP = 0.105
 WORK_CARD_OVERLAP = 0.25
 CENTER_CARD_MARGIN = 0.5 * (render.CARD_HEIGHT - render.CARD_WIDTH) / render.CARD_HEIGHT
 CARD_HALF_WIDTH = render.CARD_WIDTH / render.CARD_HEIGHT / 2
+
+AUTOWIN_RATE_MS = 250
 
 # Coefficient for the height of the card
 TOO_CLOSE_TO_DRAG_NORMALIZED = 0.2
@@ -37,6 +42,7 @@ class SolitaireView extends Component
       now: 0
 
     @timer = null
+    @autowinInterval = null
 
   tooCloseToDrag: ->
     dragDistanceSquared = ((@state.selectMaxOffsetX * @state.selectMaxOffsetX) + (@state.selectMaxOffsetY * @state.selectMaxOffsetY))
@@ -151,6 +157,24 @@ class SolitaireView extends Component
     if showMS
       return "#{zp(minutes)}:#{zp(seconds)}.#{zpp(t)}"
     return "#{zp(minutes)}:#{zp(seconds)}"
+
+  onAutowin: ->
+    console.log "onAutowin"
+    if @props.app.sendAny()
+      return
+    if @autowinInterval?
+      @toggleAutowin()
+
+  toggleAutowin: ->
+    if @autowinInterval?
+      clearInterval(@autowinInterval)
+      @autowinInterval = null
+    else
+      @autowinInterval = setInterval @onAutowin.bind(this), AUTOWIN_RATE_MS
+
+    @setState {
+      now: cardutils.now()
+    }
 
   render: ->
     gameState = @props.gameState
@@ -422,7 +446,7 @@ class SolitaireView extends Component
 
     if gameState.centerDisplay?
       @renderedCards.push el 'div', {
-        key: 'timer'
+        key: 'centerdisplay'
         style:
           position: 'fixed'
           textAlign: 'center'
@@ -435,6 +459,21 @@ class SolitaireView extends Component
           textShadow: '2px 2px #000'
           pointerEvents: 'none'
       }, [ gameState.centerDisplay ]
+
+    if @autowinInterval? or @props.canAutoWin
+      @renderedCards.push el IconButton, {
+        key: 'autowinButton'
+        size: 'large'
+        style:
+          position: 'fixed'
+          top: '10px'
+          left: '10px'
+          color: if @autowinInterval then '#afa' else '#aaa'
+        onClick: =>
+          @toggleAutowin()
+      }, [
+        el PlayIcon, { key: 'autowinIcon' }
+      ]
 
     bgProps =
       key: 'bg'
