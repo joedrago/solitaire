@@ -307,16 +307,24 @@ class App extends Component
     ]
 
     gameText = el 'div', {
-      key: 'bottomRightName'
+      key: 'bottomRightText'
       style:
         position: 'fixed'
         right: 10
         bottom: 10
+        textAlign: 'right'
         fontFamily: 'monospace'
         fontSize: '1.2em'
         color: '#fff'
         textShadow: '2px 2px #000'
-    }, [ "#{@game.modes[@game.mode].name}#{if @game.state.hard then ' (Hard)' else ''}" ]
+    }, [
+      el 'div', {
+        key: "buildVersion"
+        style:
+          color: '#6a6'
+      }, "#{WEBPACK_BUILD_VERSION}"
+      el 'div', { key: "gameAndDiff" }, "#{@game.modes[@game.mode].name}#{if @game.state.hard then ' (Hard)' else ''}"
+    ]
 
     return el 'div', {
         key: 'appcontainer'
