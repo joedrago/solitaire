@@ -56,6 +56,7 @@ class App extends Component
 
   componentDidMount: ->
     window.addEventListener("resize", @onResize.bind(this))
+    window.addEventListener("orientationchange", @onResize.bind(this))
 
     if not @state.useTouch
       touchDetector = =>
