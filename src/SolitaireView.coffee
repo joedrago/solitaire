@@ -12,7 +12,7 @@ WORK_CARD_OVERLAP = 0.25
 CENTER_CARD_MARGIN = 0.5 * (render.CARD_HEIGHT - render.CARD_WIDTH) / render.CARD_HEIGHT
 CARD_HALF_WIDTH = render.CARD_WIDTH / render.CARD_HEIGHT / 2
 
-AUTOWIN_RATE_MS = 250
+AUTOWIN_RATE_MS = 400
 
 # Coefficient for the height of the card
 TOO_CLOSE_TO_DRAG_NORMALIZED = 0.2
@@ -40,9 +40,11 @@ class SolitaireView extends Component
       selectMaxOffsetX: 0
       selectMaxOffsetY: 0
       now: 0
+      lastSendAny: 0
+      sent: null
 
     @timer = null
-    @autowinInterval = null
+    @autowinInterval = false
 
   tooCloseToDrag: ->
     dragDistanceSquared = ((@state.selectMaxOffsetX * @state.selectMaxOffsetX) + (@state.selectMaxOffsetY * @state.selectMaxOffsetY))
@@ -159,21 +161,42 @@ class SolitaireView extends Component
     return "#{zp(minutes)}:#{zp(seconds)}"
 
   onAutowin: ->
-    console.log "onAutowin"
-    if @props.app.sendAny()
-      return
-    if @autowinInterval?
-      @toggleAutowin()
+    now = cardutils.now()
+    if now > (@state.lastSendAny + AUTOWIN_RATE_MS)
+      sent = @props.app.sendAny()
+      if sent?
+        cardInfo = @cardInfos[@cardKey('work', sent.prevOuterIndex, sent.prevInnerIndex)]
+        if cardInfo?
+          sent.x = cardInfo.x
+          sent.y = cardInfo.y
+        else
+          sent.x = -1
+          sent.y = -1
+        console.log "Sent: ", sent
+      else if @autowinInterval
+        @toggleAutowin()
+      @setState {
+        lastSendAny: now
+        now: now
+        sent: sent
+      }
+    else
+      @setState {
+        now: now
+      }
+
+    if @autowinInterval
+      window.requestAnimationFrame(@onAutowin.bind(this))
 
   toggleAutowin: ->
-    if @autowinInterval?
-      clearInterval(@autowinInterval)
-      @autowinInterval = null
-    else
-      @autowinInterval = setInterval @onAutowin.bind(this), AUTOWIN_RATE_MS
+    @autowinInterval = !@autowinInterval
+
+    if @autowinInterval
+      window.requestAnimationFrame(@onAutowin.bind(this))
 
     @setState {
       now: cardutils.now()
+      sent: null
     }
 
   render: ->
@@ -226,10 +249,17 @@ class SolitaireView extends Component
     @renderScalePixels = renderScale * UNIT
     renderOffsetT = @renderScalePixels * 0.1
 
+    sentPerc = (@state.now - @state.lastSendAny) / AUTOWIN_RATE_MS
+    if sentPerc < 0
+      sentPerc = 0
+    else if sentPerc > 1
+      sentPerc = 1
     renderInfo =
       view: this
       scale: renderScale
       dragSnapPixels: Math.floor(@renderScalePixels * 0.1)
+      sent: @state.sent
+      sentPerc: sentPerc
     listenerInfo =
       onClick: @cardClick.bind(this)
       onOther: @onBackground.bind(this)
@@ -309,33 +339,6 @@ class SolitaireView extends Component
             innerIndex: 0
           @renderCard(cardInfo, renderInfo, listenerInfo)
 
-    currentL = renderOffsetL + ((foundationOffsetL + CENTER_CARD_MARGIN) * @renderScalePixels)
-    for foundation, foundationIndex in gameState.foundations
-      do (foundation, foundationIndex) =>
-        cardInfo =
-          key: "foundguide#{foundationIndex}"
-          raw: cardutils.GUIDE
-          x: currentL
-          y: renderOffsetT
-          selected: false
-          type: 'foundation'
-          outerIndex: foundationIndex
-          innerIndex: 0
-        @renderCard(cardInfo, renderInfo, listenerInfo)
-      if foundation != cardutils.GUIDE
-        do (foundation, foundationIndex) =>
-          cardInfo =
-            key: "found#{foundationIndex}"
-            raw: foundation
-            x: currentL
-            y: renderOffsetT
-            selected: false
-            type: 'foundation'
-            outerIndex: foundationIndex
-            innerIndex: 0
-          @renderCard(cardInfo, renderInfo, listenerInfo)
-      currentL += @renderScalePixels
-
     currentL = renderOffsetL + (CENTER_CARD_MARGIN * @renderScalePixels)
     for workColumn, workColumnIndex in gameState.work
       do (workColumnIndex, workIndex) =>
@@ -365,6 +368,45 @@ class SolitaireView extends Component
             type: 'work'
             outerIndex: workColumnIndex
             innerIndex: workIndex
+          @renderCard(cardInfo, renderInfo, listenerInfo)
+      currentL += @renderScalePixels
+
+    currentL = renderOffsetL + ((foundationOffsetL + CENTER_CARD_MARGIN) * @renderScalePixels)
+    for foundation, foundationIndex in gameState.foundations
+      do (foundation, foundationIndex) =>
+        cardInfo =
+          key: "foundguide#{foundationIndex}"
+          raw: cardutils.GUIDE
+          x: currentL
+          y: renderOffsetT
+          selected: false
+          type: 'foundation'
+          outerIndex: foundationIndex
+          innerIndex: 0
+        @renderCard(cardInfo, renderInfo, listenerInfo)
+      if @state.sent? and (@state.sent.foundationIndex == foundationIndex) and (@state.sent.prevFoundationRaw >= 0)
+        do (foundation, foundationIndex) =>
+          cardInfo =
+            key: "foundunder#{foundationIndex}"
+            raw: @state.sent.prevFoundationRaw
+            x: currentL
+            y: renderOffsetT
+            selected: false
+            type: 'foundation'
+            outerIndex: foundationIndex
+            innerIndex: 0
+          @renderCard(cardInfo, renderInfo, listenerInfo)
+      if foundation != cardutils.GUIDE
+        do (foundation, foundationIndex) =>
+          cardInfo =
+            key: "found#{foundationIndex}"
+            raw: foundation
+            x: currentL
+            y: renderOffsetT
+            selected: false
+            type: 'foundation'
+            outerIndex: foundationIndex
+            innerIndex: 0
           @renderCard(cardInfo, renderInfo, listenerInfo)
       currentL += @renderScalePixels
 
@@ -460,7 +502,7 @@ class SolitaireView extends Component
           pointerEvents: 'none'
       }, [ gameState.centerDisplay ]
 
-    if @autowinInterval? or @props.canAutoWin
+    if @autowinInterval or @props.canAutoWin
       @renderedCards.push el IconButton, {
         key: 'autowinButton'
         size: 'large'

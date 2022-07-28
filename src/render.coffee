@@ -89,6 +89,12 @@ export CARD_WIDTH = 119
 export CARD_HEIGHT = 162
 export CARD_ASPECT_RATIO = CARD_WIDTH / CARD_HEIGHT
 
+easeInOutQuad = (x) ->
+  if x < 0.5 
+    return 2 * x * x 
+  else 
+    return 1 - Math.pow(-2 * x + 2, 2) / 2
+
 export card = (cardInfo, renderInfo, listenerInfo) ->
   type = cardInfo.type
   outerIndex = cardInfo.outerIndex
@@ -110,6 +116,13 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
       x += renderInfo.view.state.selectOffsetX + renderInfo.view.state.selectAdditionalOffsetX
       y += renderInfo.view.state.selectOffsetY + renderInfo.view.state.selectAdditionalOffsetY
 
+  zIndex = null
+  if renderInfo.sent? and (renderInfo.sent.raw == cardInfo.raw) and (renderInfo.sent.x >= 0) and (renderInfo.sent.y >= 0)
+    p = easeInOutQuad(renderInfo.sentPerc)
+    x += (renderInfo.sent.x - x) * (1 - p)
+    y += (renderInfo.sent.y - y) * (1 - p)
+    zIndex = 5
+
   cardStyle =
     position: 'fixed'
     left: "#{x}px"
@@ -118,6 +131,9 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
     height: CARD_HEIGHT
     transformOrigin: "top left"
     transform: "scale(#{renderInfo.scale})"
+
+  if zIndex?
+    cardStyle.zIndex = zIndex
 
   if cardInfo.raw == cardutils.GUIDE
     url = cardGuide

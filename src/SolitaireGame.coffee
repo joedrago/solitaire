@@ -225,7 +225,7 @@ class SolitaireGame
         src = srcCol[innerIndex]
 
     if not src?
-      return false
+      return null
 
     srcInfo = cardutils.info(src)
     dstIndex = @findFoundationSuitIndex(src)
@@ -243,6 +243,7 @@ class SolitaireGame
           sendHome = true
 
       if sendHome
+        prevFoundationRaw = @state.foundations[dstIndex]
         @state.foundations[dstIndex] = src
         switch type
           when 'pile'
@@ -255,18 +256,25 @@ class SolitaireGame
               # reveal any face down cards
               srcCol[srcCol.length - 1] = srcCol[srcCol.length - 1] & ~cardutils.FLIP_FLAG
         @select('none')
-        return true
-    return false
+        return {
+          raw: src
+          prevOuterIndex: outerIndex
+          prevInnerIndex: innerIndex
+          foundationIndex: dstIndex
+          prevFoundationRaw: prevFoundationRaw
+        }
+    return null
 
   sendAny: ->
     if not @canAutoWin()
-      return false
+      return null
     for work, workIndex in @state.work
       if work.length > 0
-        if @sendHome('work', workIndex, work.length - 1)
+        sent = @sendHome('work', workIndex, work.length - 1)
+        if sent?
           @queueSave()
-          return true
-    return false
+          return sent
+    return null
 
   # -----------------------------------------------------------------------------------------------
   # Selection
