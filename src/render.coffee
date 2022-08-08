@@ -120,7 +120,7 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
   if renderInfo.sent? and (renderInfo.sent.raw == cardInfo.raw) and (renderInfo.sent.x >= 0) and (renderInfo.sent.y >= 0)
     p = easeInOutQuad(renderInfo.sentPerc)
     x += (renderInfo.sent.x - x) * (1 - p)
-    y += (renderInfo.sent.y - y) * (1 - p)
+    y += (renderInfo.sent.y - y) * (1 - renderInfo.sentPerc)
     zIndex = 5
 
   cardStyle =
