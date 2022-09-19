@@ -300,8 +300,9 @@ class SolitaireGame
           @state.reserve.cols[@state.selection.outerIndex].pop()
       when 'work'
         srcCol = @state.work[@state.selection.outerIndex]
-        while @state.selection.innerIndex < srcCol.length
-          srcCol.pop()
+        if @state.selection.innerIndex >= 0
+          while @state.selection.innerIndex < srcCol.length
+            srcCol.pop()
         if srcCol.length > 0
           # reveal any face down cards
           srcCol[srcCol.length - 1] = srcCol[srcCol.length - 1] & ~cardutils.FLIP_FLAG
