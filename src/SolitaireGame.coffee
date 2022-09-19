@@ -320,11 +320,12 @@ class SolitaireGame
           if col.length > 0
             selectedCards.push col[col.length - 1]
       when 'work'
-        srcCol = @state.work[@state.selection.outerIndex]
-        index = @state.selection.innerIndex
-        while index < srcCol.length
-          selectedCards.push srcCol[index]
-          index += 1
+        if (@state.selection.outerIndex >= 0) and (@state.selection.innerIndex >= 0)
+          srcCol = @state.work[@state.selection.outerIndex]
+          index = @state.selection.innerIndex
+          while index < srcCol.length
+            selectedCards.push srcCol[index]
+            index += 1
 
     return selectedCards
 
