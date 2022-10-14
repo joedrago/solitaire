@@ -13,6 +13,7 @@ class SolitaireGame
     @modes = {}
     @loadMode('baker')
     @loadMode('eagle')
+    @loadMode('emperor')
     @loadMode('freecell')
     @loadMode('golf')
     @loadMode('klondike')
@@ -147,7 +148,7 @@ class SolitaireGame
     for f, fIndex in @state.foundations
       if f >= 0
         dstInfo = cardutils.info(f)
-        if srcInfo.suit == dstInfo.suit
+        if (srcInfo.suit == dstInfo.suit) and ((srcInfo.value == dstInfo.value + 1) or (srcInfo.value == dstInfo.value - 12))
           return fIndex
 
     # find a free slot
