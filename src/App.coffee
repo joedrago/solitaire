@@ -129,18 +129,13 @@ class App extends Component
     , null, !@game.canUndo()
     drawerItems.push el Divider, { key: "undoDivider" }
 
-    drawerItems.push @createDrawerButton "playAgainMenu", ReplayIcon, "Play Again: #{@game.modes[@game.mode].name}", =>
-      @game.newGame()
-      @setState {
-        drawerOpen: false
-        gameState: @game.state
-      }
-
     drawerItems.push @createDrawerButton "helpMenu", BookIcon, "Rule Help: #{@game.modes[@game.mode].name}", =>
       @setState {
         helpOpen: true
         drawerOpen: false
       }
+    drawerItems.push el Divider, { key: "helpDivider" }
+
     drawerItems.push @createDrawerButton "hardMenu", SickIcon, "Hard Mode", =>
       @game.hard = !@game.hard
       @game.save()
@@ -148,7 +143,13 @@ class App extends Component
         hard: @game.hard
       }
     , @game.hard
-    drawerItems.push el Divider, { key: "helpDivider" }
+    drawerItems.push @createDrawerButton "playAgainMenu", ReplayIcon, "Play Again: #{@game.modes[@game.mode].name}", =>
+      @game.newGame()
+      @setState {
+        drawerOpen: false
+        gameState: @game.state
+      }
+    drawerItems.push el Divider, { key: "playAgainDivider" }
 
     for modeName, mode of @game.modes
       do (drawerItems, modeName, mode) =>
