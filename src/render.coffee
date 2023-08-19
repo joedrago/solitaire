@@ -139,6 +139,10 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
     url = cardGuide
     val = 0
     suit = 0
+    cardStyle.border = "1px solid rgba(0, 0, 0, 0.5)"
+    cardStyle.width -= 4
+    cardStyle.height -= 4
+    cardStyle.borderRadius = "10px"
   else if cardInfo.raw == cardutils.RESERVE
     url = cardReserve
     val = 0

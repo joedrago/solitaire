@@ -520,11 +520,18 @@ class SolitaireView extends Component
         el PlayIcon, { key: 'autowinIcon' }
       ]
 
+    bgColor = '#363'
+    bgRadius = '0px'
+    if @props.opacity < 1
+      bgColor = "rgba(0, 0, 0, #{@props.opacity})"
+      bgRadius = '10px'
+
     bgProps =
       key: 'bg'
       style:
         zIndex: -1
-        backgroundColor: "rgba(47, 96, 47, #{@props.opacity})"
+        backgroundColor: bgColor
+        borderRadius: bgRadius
         position: 'fixed'
         left: @props.x
         top: @props.y

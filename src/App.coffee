@@ -56,7 +56,7 @@ if window.easterDB? and easterName?
     easterName = names[Math.floor(Math.random() * names.length)]
   easter = window.easterDB[easterName]
   easter.name = easterName
-  easterOpacity = 0.7
+  easterOpacity = 0.2
 
   for soundIndex in [0...easter.random.length]
     easter.random[soundIndex] = new Audio("easter/#{easter.random[soundIndex]}")
