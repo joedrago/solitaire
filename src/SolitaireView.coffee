@@ -278,6 +278,9 @@ class SolitaireView extends Component
       else
         drawOffsetL = ((maxWidth / 2) - 1) * @renderScalePixels
         drawOffsetT = 2.3 * @renderScalePixels
+      drawOffsetL += @props.x
+      drawOffsetT += @props.y
+
       # Top Left Draw Pile
       drawCard = cardutils.BACK
       if gameState.draw.cards.length == 0
@@ -345,8 +348,8 @@ class SolitaireView extends Component
         cardInfo =
           key: "workguide#{workColumnIndex}_#{workIndex}"
           raw: cardutils.GUIDE
-          x: currentL
-          y: workTop * @renderScalePixels
+          x: @props.x + currentL
+          y: @props.y + workTop * @renderScalePixels
           selected: false
           type: 'work'
           outerIndex: workColumnIndex
@@ -362,8 +365,8 @@ class SolitaireView extends Component
           cardInfo =
             key: "work#{workColumnIndex}_#{workIndex}"
             raw: work
-            x: currentL
-            y: ((workTop + (workIndex * WORK_CARD_OVERLAP)) * @renderScalePixels)
+            x: @props.x + currentL
+            y: @props.y + ((workTop + (workIndex * WORK_CARD_OVERLAP)) * @renderScalePixels)
             selected: isSelected
             type: 'work'
             outerIndex: workColumnIndex
@@ -377,8 +380,8 @@ class SolitaireView extends Component
         cardInfo =
           key: "foundguide#{foundationIndex}"
           raw: cardutils.GUIDE
-          x: currentL
-          y: renderOffsetT
+          x: @props.x + currentL
+          y: @props.y + renderOffsetT
           selected: false
           type: 'foundation'
           outerIndex: foundationIndex
@@ -389,8 +392,8 @@ class SolitaireView extends Component
           cardInfo =
             key: "foundunder#{foundationIndex}"
             raw: @state.sent.prevFoundationRaw
-            x: currentL
-            y: renderOffsetT
+            x: @props.x + currentL
+            y: @props.y + renderOffsetT
             selected: false
             type: 'foundation'
             outerIndex: foundationIndex
@@ -401,8 +404,8 @@ class SolitaireView extends Component
           cardInfo =
             key: "found#{foundationIndex}"
             raw: foundation
-            x: currentL
-            y: renderOffsetT
+            x: @props.x + currentL
+            y: @props.y + renderOffsetT
             selected: false
             type: 'foundation'
             outerIndex: foundationIndex
@@ -419,8 +422,8 @@ class SolitaireView extends Component
       cardInfo =
         key: 'draw'
         raw: drawCard
-        x: renderOffsetL
-        y: @props.height - (0.35 * @renderScalePixels)
+        x: @props.x + renderOffsetL
+        y: @props.y + @props.height - (0.35 * @renderScalePixels)
         selected: false
         type: 'draw'
         outerIndex: 0
@@ -429,11 +432,11 @@ class SolitaireView extends Component
 
     if gameState.reserve?
       if gameState.reserve.pos == 'middle'
-        drawOffsetL = ((maxWidth / 2) - 0.5) * @renderScalePixels
-        drawOffsetT = 3 * @renderScalePixels
+        drawOffsetL = @props.x + ((maxWidth / 2) - 0.5) * @renderScalePixels
+        drawOffsetT = @props.y + (3 * @renderScalePixels)
       else
-        drawOffsetL = 0
-        drawOffsetT = 0
+        drawOffsetL = @props.x
+        drawOffsetT = @props.y
 
       for col, colIndex in gameState.reserve.cols
         drawCard = cardutils.RESERVE
@@ -476,9 +479,9 @@ class SolitaireView extends Component
         style:
           position: 'fixed'
           textAlign: 'center'
-          left: "0px"
+          left: "#{@props.x}px"
           width: '100%'
-          top: "#{3.5 * @renderScalePixels}px"
+          top: "#{@props.y + (3.5 * @renderScalePixels)}px"
           fontFamily: 'monospace'
           fontSize: "#{@renderScalePixels * 0.1}px"
           color: gameState.timerColor
@@ -492,9 +495,9 @@ class SolitaireView extends Component
         style:
           position: 'fixed'
           textAlign: 'center'
-          left: "0px"
-          width: '100%'
-          top: "#{0.5 * @renderScalePixels}px"
+          left: "#{@props.x}px"
+          width: "#{@props.width}px"
+          top: "#{@props.y + (0.5 * @renderScalePixels)}px"
           fontFamily: 'monospace'
           fontSize: "#{@renderScalePixels * 0.2}px"
           color: '#6a6'
@@ -508,8 +511,8 @@ class SolitaireView extends Component
         size: 'large'
         style:
           position: 'fixed'
-          top: '10px'
-          left: '10px'
+          top: "#{@props.y + 10}px"
+          left: "#{@props.x + 10}px"
           color: if @autowinInterval then '#afa' else '#aaa'
         onClick: =>
           @toggleAutowin()
@@ -521,7 +524,10 @@ class SolitaireView extends Component
       key: 'bg'
       style:
         zIndex: -1
-        backgroundColor: '#363'
+        backgroundColor: "rgba(47, 96, 47, #{@props.opacity})"
+        position: 'fixed'
+        left: @props.x
+        top: @props.y
         width: @props.width
         height: @props.height
 

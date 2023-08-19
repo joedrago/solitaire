@@ -36,6 +36,47 @@ import SolitaireView from './SolitaireView'
 import * as render from './render'
 import fullscreen from './fullscreen'
 import { el } from './reactutils'
+import { qs } from './cardutils'
+
+easter =
+  imageW: 0
+  imageH: 0
+  imageO: 0
+  gameO: 0
+  gameR: 0
+  gameT: 0
+  gameB: 0
+
+easterOpacity = 1
+easterName = qs('e')
+if window.easterDB? and easterName?
+  if not window.easterDB[easterName]?
+    # pick one at random
+    names = Object.keys(window.easterDB)
+    easterName = names[Math.floor(Math.random() * names.length)]
+  easter = window.easterDB[easterName]
+  easter.name = easterName
+  easterOpacity = 0.7
+
+  for soundIndex in [0...easter.random.length]
+    easter.random[soundIndex] = new Audio("easter/#{easter.random[soundIndex]}")
+    easter.random[soundIndex].volume = 0.4
+  for soundIndex in [0...easter.win.length]
+    easter.win[soundIndex] = new Audio("easter/#{easter.win[soundIndex]}")
+    easter.win[soundIndex].volume = 0.4
+
+  console.log "easter: ", easter
+
+lastPlayed = null
+easterPlay = (which) ->
+  if not easter.name?
+    return
+  if lastPlayed?
+    lastPlayed.pause()
+    lastPlayed = null
+  soundIndex = Math.floor(Math.random() * easter[which].length)
+  lastPlayed = easter[which][soundIndex]
+  lastPlayed.play()
 
 class App extends Component
   constructor: (props) ->
@@ -109,19 +150,96 @@ class App extends Component
     ]
 
   render: ->
+    easterScale = 1
+    if easter.name?
+      easterScale = @state.height * easter.charHeight / easter.imageH
+      charIndex = 0
+      if @state.winToastOpen
+        charIndex = 1
+      char = el 'div', {
+        key: 'easterChar'
+        style:
+          backgroundImage: "url(easter/#{easter.images[charIndex]})"
+          backgroundSize: 'contain'
+          backgroundPosition: "#{Math.floor(easter.imageO * easterScale)}px 0px"
+          backgroundRepeat: 'no-repeat'
+          position: 'absolute'
+          left: "0px"
+          bottom: "0px"
+          width: "#{easter.imageW * easterScale}px"
+          height: "#{easter.imageH * easterScale}px"
+      }
+
+      bg = el 'img', {
+        key: 'easterBG'
+        src: "easter/#{easter.bg}"
+        style:
+          position: 'fixed'
+          left: '0px'
+          top: '0px'
+          width: '100%'
+          height: '100%'
+      }
+
+      br = el 'img', {
+        key: 'easterBR'
+        src: "easter/br.png"
+        style:
+          position: 'fixed'
+          bottom: '0px'
+          right: '0px'
+          height: "#{Math.floor(@state.height * 0.2)}px"
+      }
+
+      title = el 'img', {
+        key: 'easterTitle'
+        src: "easter/#{easter.title}"
+        style:
+          height: "#{easter.gameT * @state.height}px"
+      }
+      titleDiv = el 'div', {
+        key: 'easterTitleDiv'
+        style:
+          position: 'fixed'
+          left: '0px'
+          top: '0px'
+          textAlign: 'center'
+          display: 'block'
+          width: '100%'
+      }, [ title ]
+
+      easterView = el 'div', {
+        key: 'easterView'
+        style:
+          position: 'fixed'
+          width: '100%'
+          height: '100%'
+          zIndex: -50
+      }, [ bg, titleDiv, br, char ]
+    else
+      easterView = el 'div', {
+        key: 'easterView'
+        style:
+          display: 'none'
+      }
+
     gameView = el SolitaireView, {
       key: 'gameview'
       gameState: @state.gameState
       canAutoWin: @game.canAutoWin()
       app: this
-      width: @state.width
-      height: @state.height
+      x: easter.gameO * easterScale
+      y: easter.gameT * @state.height
+      width: @state.width - ((easter.gameO + easter.gameR) * easterScale)
+      height: @state.height - ((easter.gameT + easter.gameB) * @state.height)
+      opacity: easterOpacity
       useTouch: @state.useTouch
     }
 
     drawerItems = []
 
     drawerItems.push @createDrawerButton "undoButton", UndoIcon, "Undo", =>
+      easterPlay('random')
       @game.undo()
       @setState {
         gameState: @game.state
@@ -144,6 +262,7 @@ class App extends Component
       }
     , @game.hard
     drawerItems.push @createDrawerButton "playAgainMenu", ReplayIcon, "Play Again: #{@game.modes[@game.mode].name}", =>
+      easterPlay('win')
       @game.newGame()
       @setState {
         drawerOpen: false
@@ -154,6 +273,7 @@ class App extends Component
     for modeName, mode of @game.modes
       do (drawerItems, modeName, mode) =>
         drawerItems.push @createDrawerButton "newGame#{modeName}", GamesIcon, "New Game: #{mode.name}", =>
+            easterPlay('win')
             @game.newGame(modeName)
             @setState {
               drawerOpen: false
@@ -332,6 +452,7 @@ class App extends Component
         key: 'appcontainer'
       }, [
       drawer
+      easterView
       gameView
       menuButton
       winToast
@@ -342,6 +463,8 @@ class App extends Component
 
   gameClick: (type, outerIndex, innerIndex, isRightClick, isMouseUp) ->
     @game.click(type, outerIndex, innerIndex, isRightClick, isMouseUp)
+    if not @state.winToastOpen && @game.won()
+      easterPlay('win')
     @setState {
       gameState: @game.state
       winToastOpen: @game.won()
@@ -350,6 +473,8 @@ class App extends Component
 
   sendAny: ->
     sent = @game.sendAny()
+    if not @state.winToastOpen && @game.won()
+      easterPlay('win')
     @setState {
       gameState: @game.state
       winToastOpen: @game.won()
