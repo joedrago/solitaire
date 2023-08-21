@@ -127,10 +127,9 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
     position: 'fixed'
     left: "#{x}px"
     top: "#{y}px"
-    width: CARD_WIDTH
-    height: CARD_HEIGHT
-    transformOrigin: "top left"
-    transform: "scale(#{renderInfo.scale})"
+    width: CARD_WIDTH * renderInfo.scale
+    height: CARD_HEIGHT * renderInfo.scale
+    transformOrigin: "center"
 
   if zIndex?
     cardStyle.zIndex = zIndex
@@ -155,6 +154,7 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
     url = cardBack
     val = 0
     suit = 0
+    # cardStyle.transform = "rotate(90deg)"
   else
     raw = cardInfo.raw & ~cardutils.FLIP_FLAG
     url = CARD_URLS[raw]
