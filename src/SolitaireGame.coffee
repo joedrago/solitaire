@@ -9,6 +9,8 @@ class SolitaireGame
     @mode = 'klondike'
     @hard = false # this is the toggle for the *next* game. Check @state.hard to see if *this* game is hard
     @undoStack = []
+    @tweens = []
+    @nextTweenID = 0
 
     @modes = {}
     @loadMode('baker')
@@ -21,6 +23,7 @@ class SolitaireGame
     @loadMode('spider')
     @loadMode('spiderette')
     @loadMode('yukon')
+    @loadMode('luckyseven')
 
     if not @load()
       @newGame()
@@ -135,6 +138,10 @@ class SolitaireGame
     if @modes[@mode]? and @modes[@mode].lost?
       return @modes[@mode].lost()
     return false
+
+  phase: ->
+    if @modes[@mode]? and @modes[@mode].phase?
+      @modes[@mode].phase()
 
   # -----------------------------------------------------------------------------------------------
   # Generic helpers
@@ -329,6 +336,12 @@ class SolitaireGame
             index += 1
 
     return selectedCards
+
+  # -----------------------------------------------------------------------------------------------
+  # Tweens
+
+  addTweens: (tweens) ->
+    @app.addTweens(tweens)
 
   # -----------------------------------------------------------------------------------------------
 

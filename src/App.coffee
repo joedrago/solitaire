@@ -34,6 +34,7 @@ import Snackbar from '@mui/material/Snackbar'
 import SolitaireGame from './SolitaireGame'
 import SolitaireView from './SolitaireView'
 import * as render from './render'
+import * as cardutils from './cardutils'
 import fullscreen from './fullscreen'
 import { el } from './reactutils'
 
@@ -41,7 +42,11 @@ class App extends Component
   constructor: (props) ->
     super(props)
 
+    @tweens = []
+    @nextTweenID = 1
+
     @game = new SolitaireGame
+    @game.app = this
 
     @state =
       width: window.innerWidth
@@ -356,5 +361,22 @@ class App extends Component
       loseToastOpen: @game.lost()
     }
     return sent
+
+  phase: ->
+    @game.phase()
+    @setState {
+      gameState: @game.state
+      winToastOpen: @game.won()
+      loseToastOpen: @game.lost()
+    }
+
+  addTweens: (tweens) ->
+    console.log "addTweens: ", tweens
+    id = @nextTweenID
+    @nextTweenID += 1
+    for tween in tweens
+      tween.id = id
+      tween.done = false
+      @tweens.push tween
 
 export default App

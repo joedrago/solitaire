@@ -45,6 +45,7 @@ class SolitaireView extends Component
 
     @timer = null
     @autowinInterval = false
+    @tweening = false
 
   tooCloseToDrag: ->
     dragDistanceSquared = ((@state.selectMaxOffsetX * @state.selectMaxOffsetX) + (@state.selectMaxOffsetY * @state.selectMaxOffsetY))
@@ -199,6 +200,16 @@ class SolitaireView extends Component
       sent: null
     }
 
+  onTween: ->
+    # console.log "onTween #{cardutils.now()}"
+    @setState {
+      now: cardutils.now()
+    }
+    if @props.app.tweens and (@props.app.tweens.length > 0)
+      window.requestAnimationFrame(@onTween.bind(this))
+    else
+      @tweening = false
+
   render: ->
     gameState = @props.gameState
     @adjustTimer(gameState)
@@ -232,6 +243,11 @@ class SolitaireView extends Component
     if maxWidth < workWidth
       maxWidth = workWidth
     maxHeight = workBottom
+
+    if gameState.grid?
+      maxWidth = 6.8
+      maxHeight = 5.5
+
     maxAspectRatio = maxWidth / maxHeight
     boardAspectRatio = @props.width / @props.height
 
@@ -517,11 +533,127 @@ class SolitaireView extends Component
         el PlayIcon, { key: 'autowinIcon' }
       ]
 
+    if gameState.grid?
+      for colIndex in [0...gameState.grid.length]
+        cardInfo =
+          key: "gridcolguide#{colIndex}"
+          raw: cardutils.ROAD
+          x: @props.x + renderOffsetL + (@renderScalePixels * ((colIndex + 1) - CENTER_CARD_MARGIN))
+          y: @props.y + renderOffsetT + (@renderScalePixels * CENTER_CARD_MARGIN * 2)
+          selected: false
+          type: 'background'
+          outerIndex: 0
+          innerIndex: 0
+          tapped: true
+        @renderCard(cardInfo, renderInfo, listenerInfo)
+      for rowIndex in [0...gameState.grid[0].length]
+        cardInfo =
+          key: "gridrowguide#{rowIndex}"
+          raw: cardutils.ROAD
+          x: @props.x + renderOffsetL - (@renderScalePixels * 0.01)
+          y: @props.y + renderOffsetT + (@renderScalePixels * ((rowIndex + 1) + CENTER_CARD_MARGIN))
+          selected: false
+          type: 'background'
+          outerIndex: 0
+          innerIndex: 0
+          tapped: false
+        @renderCard(cardInfo, renderInfo, listenerInfo)
+
+      for colIndex in [0...gameState.grid.length]
+        for rowIndex in [0...gameState.grid[0].length]
+          isSelected = false
+          if (gameState.selection.type == 'grid') and (colIndex == gameState.selection.outerIndex) and (rowIndex == gameState.selection.innerIndex)
+            isSelected = true
+          raw = cardutils.GRID
+          if gameState.grid[colIndex][rowIndex]?
+            raw = gameState.grid[colIndex][rowIndex].raw
+          cardInfo =
+            key: "grid#{colIndex}#{rowIndex}"
+            raw: raw
+            x: @props.x + renderOffsetL + (@renderScalePixels * ((colIndex + 1) - CENTER_CARD_MARGIN))
+            y: @props.y + renderOffsetT + (@renderScalePixels * ((rowIndex + 1) + CENTER_CARD_MARGIN))
+            selected: isSelected
+            type: 'grid'
+            outerIndex: colIndex
+            innerIndex: rowIndex
+            tapped: false
+          @renderCard(cardInfo, renderInfo, listenerInfo)
+
+      if gameState.phase?
+        @renderedCards.push el 'div', {
+          key: 'next'
+          style:
+            position: 'fixed'
+            textAlign: 'center'
+            left: @props.x + renderOffsetL
+            width: renderScale * render.CARD_WIDTH
+            height: renderScale * render.CARD_WIDTH
+            lineHeight: "#{renderScale * render.CARD_WIDTH}px"
+            top: @props.y + renderOffsetT + (@renderScalePixels * (1 + CENTER_CARD_MARGIN)) - (renderScale * render.CARD_WIDTH)
+            fontFamily: 'monospace'
+            fontSize: "#{@renderScalePixels * 0.15}px"
+            color: '#fff'
+            textShadow: '2px 2px #000'
+          onMouseDown: (ev) =>
+            ev.stopPropagation()
+            @props.app.phase()
+          onMouseUp: (ev) ->
+            ev.stopPropagation()
+        }, [ gameState.phase ]
+
+
+    if @props.app.tweens? and (@props.app.tweens.length > 0)
+      if not @tweening
+        @tweening = true
+        window.requestAnimationFrame(@onTween.bind(this))
+      processID = @props.app.tweens[0].id
+      for tween, tweenIndex in @props.app.tweens
+        if tween.id != processID
+          break
+        if not tween.start?
+          tween.start = cardutils.now()
+        now = cardutils.now()
+        p = 1 - (((tween.start + tween.d) - now) / tween.d)
+        if p > 1
+          console.log "Tween finished:", tween
+          tween.done = true
+        else
+          # render tween!
+          sx = @props.x + renderOffsetL + (@renderScalePixels * ((tween.sx + 1) - CENTER_CARD_MARGIN))
+          sy = @props.y + renderOffsetT + (@renderScalePixels * ((tween.sy + 1) + CENTER_CARD_MARGIN))
+          dx = @props.x + renderOffsetL + (@renderScalePixels * ((tween.dx + 1) - CENTER_CARD_MARGIN))
+          dy = @props.y + renderOffsetT + (@renderScalePixels * ((tween.dy + 1) + CENTER_CARD_MARGIN))
+
+          px = sx + ((dx - sx) * p)
+          py = sy + ((dy - sy) * p)
+
+          cardInfo =
+            key: "twen#{processID}#{tweenIndex}"
+            raw: tween.raw
+            x: px
+            y: py
+            selected: isSelected
+            type: 'grid'
+            outerIndex: colIndex
+            innerIndex: rowIndex
+            tapped: false
+          @renderCard(cardInfo, renderInfo, listenerInfo)
+
+      remainingTweens = []
+      for tween in @props.app.tweens
+        if not tween.done
+          remainingTweens.push tween
+      @props.app.tweens = remainingTweens
+
+    bgColor = '#363'
+    if gameState.grid?
+      bgColor = '#666'
+
     bgProps =
       key: 'bg'
       style:
         zIndex: -1
-        backgroundColor: '#363'
+        backgroundColor: bgColor
         width: @props.width
         height: @props.height
 

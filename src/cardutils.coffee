@@ -3,6 +3,21 @@ export GUIDE = -2
 export RESERVE = -3
 export DEAD = -4
 export READY = -5
+export ROAD = -6
+export GRID = -7
+export ANVIL = -8
+export ATHLETE = -9
+export FLARE = -10
+export HAMMER = -11
+export INFANTRY1 = -12
+export INFANTRY2 = -13
+export JOKER = -14
+export LEADER = -15
+export MACHINEGUN = -16
+export MORTAR = -17
+export NATURAL = -18
+export PACIFIST = -19
+
 export FLIP_FLAG = 1024
 
 export shuffle = (array) ->

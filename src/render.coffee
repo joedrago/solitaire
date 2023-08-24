@@ -63,6 +63,21 @@ import cardReserve from "./cards/reserve.svg"
 import cardDead from "./cards/dead.svg"
 import cardReady from "./cards/ready.svg"
 
+import cardRoad from "./cards/road.png"
+import cardGrid from "./cards/grid.png"
+import cardAnvil from "./cards/anvil.png"
+import cardAthlete from "./cards/athlete.png"
+import cardFlare from "./cards/flare.png"
+import cardHammer from "./cards/hammer.png"
+import cardInfantry1 from "./cards/infantry1.png"
+import cardInfantry2 from "./cards/infantry2.png"
+import cardJoker from "./cards/joker.png"
+import cardLeader from "./cards/leader.png"
+import cardMachinegun from "./cards/machinegun.png"
+import cardMortar from "./cards/mortar.png"
+import cardNatural from "./cards/natural.png"
+import cardPacifist from "./cards/pacifist.png"
+
 CARD_URLS = [ card0, card1, card2, card3, card4, card5, card6, card7, card8, card9,
 card10, card11, card12, card13, card14, card15, card16, card17, card18,
 card19, card20, card21, card22, card23, card24, card25, card26, card27,
@@ -150,11 +165,69 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
     url = cardReady
     val = 0
     suit = 0
+  else if cardInfo.raw == cardutils.ROAD
+    url = cardRoad
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.ANVIL
+    url = cardAnvil
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.ATHLETE
+    url = cardAthlete
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.FLARE
+    url = cardFlare
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.HAMMER
+    url = cardHammer
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.INFANTRY1
+    url = cardInfantry1
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.INFANTRY2
+    url = cardInfantry2
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.JOKER
+    url = cardJoker
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.LEADER
+    url = cardLeader
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.MACHINEGUN
+    url = cardMachinegun
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.MORTAR
+    url = cardMortar
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.NATURAL
+    url = cardNatural
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.PACIFIST
+    url = cardPacifist
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.GRID
+    url = cardGrid
+    val = 0
+    suit = 0
+    cardStyle.left = x - ((CARD_HEIGHT - CARD_WIDTH) * renderInfo.scale / 2)
+    cardStyle.width = CARD_HEIGHT * renderInfo.scale
+    cardStyle.height = CARD_HEIGHT * renderInfo.scale
   else if (cardInfo.raw == cardutils.BACK) || ((cardInfo.raw & cardutils.FLIP_FLAG) == cardutils.FLIP_FLAG)
     url = cardBack
     val = 0
     suit = 0
-    # cardStyle.transform = "rotate(90deg)"
   else
     raw = cardInfo.raw & ~cardutils.FLIP_FLAG
     url = CARD_URLS[raw]
@@ -162,6 +235,9 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
     suit = Math.floor(raw / 13)
     cardStyle.border = "1px solid rgba(0, 0, 0, 0.5)"
     cardStyle.borderRadius = "10px"
+
+  if cardInfo.tapped
+    cardStyle.transform = "rotate(90deg)"
 
   stopPropagation = true
   if isSelected
