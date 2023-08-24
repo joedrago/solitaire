@@ -538,8 +538,8 @@ class SolitaireView extends Component
         cardInfo =
           key: "gridcolguide#{colIndex}"
           raw: cardutils.ROAD
-          x: @props.x + renderOffsetL + (@renderScalePixels * ((colIndex + 1) - CENTER_CARD_MARGIN))
-          y: @props.y + renderOffsetT + (@renderScalePixels * CENTER_CARD_MARGIN * 2)
+          x: renderOffsetL + (@renderScalePixels * ((colIndex + 1) - CENTER_CARD_MARGIN))
+          y: renderOffsetT + (@renderScalePixels * CENTER_CARD_MARGIN * 2)
           selected: false
           type: 'background'
           outerIndex: 0
@@ -550,8 +550,8 @@ class SolitaireView extends Component
         cardInfo =
           key: "gridrowguide#{rowIndex}"
           raw: cardutils.ROAD
-          x: @props.x + renderOffsetL - (@renderScalePixels * 0.01)
-          y: @props.y + renderOffsetT + (@renderScalePixels * ((rowIndex + 1) + CENTER_CARD_MARGIN))
+          x: renderOffsetL - (@renderScalePixels * 0.01)
+          y: renderOffsetT + (@renderScalePixels * ((rowIndex + 1) + CENTER_CARD_MARGIN))
           selected: false
           type: 'background'
           outerIndex: 0
@@ -570,8 +570,8 @@ class SolitaireView extends Component
           cardInfo =
             key: "grid#{colIndex}#{rowIndex}"
             raw: raw
-            x: @props.x + renderOffsetL + (@renderScalePixels * ((colIndex + 1) - CENTER_CARD_MARGIN))
-            y: @props.y + renderOffsetT + (@renderScalePixels * ((rowIndex + 1) + CENTER_CARD_MARGIN))
+            x: renderOffsetL + (@renderScalePixels * ((colIndex + 1) - CENTER_CARD_MARGIN))
+            y: renderOffsetT + (@renderScalePixels * ((rowIndex + 1) + CENTER_CARD_MARGIN))
             selected: isSelected
             type: 'grid'
             outerIndex: colIndex
@@ -585,7 +585,7 @@ class SolitaireView extends Component
           style:
             position: 'fixed'
             textAlign: 'center'
-            left: @props.x + renderOffsetL
+            left: renderOffsetL
             width: renderScale * render.CARD_WIDTH
             height: renderScale * render.CARD_WIDTH
             lineHeight: "#{renderScale * render.CARD_WIDTH}px"
@@ -619,10 +619,10 @@ class SolitaireView extends Component
           tween.done = true
         else
           # render tween!
-          sx = @props.x + renderOffsetL + (@renderScalePixels * ((tween.sx + 1) - CENTER_CARD_MARGIN))
-          sy = @props.y + renderOffsetT + (@renderScalePixels * ((tween.sy + 1) + CENTER_CARD_MARGIN))
-          dx = @props.x + renderOffsetL + (@renderScalePixels * ((tween.dx + 1) - CENTER_CARD_MARGIN))
-          dy = @props.y + renderOffsetT + (@renderScalePixels * ((tween.dy + 1) + CENTER_CARD_MARGIN))
+          sx = renderOffsetL + (@renderScalePixels * ((tween.sx + 1) - CENTER_CARD_MARGIN))
+          sy = renderOffsetT + (@renderScalePixels * ((tween.sy + 1) + CENTER_CARD_MARGIN))
+          dx = renderOffsetL + (@renderScalePixels * ((tween.dx + 1) - CENTER_CARD_MARGIN))
+          dy = renderOffsetT + (@renderScalePixels * ((tween.dy + 1) + CENTER_CARD_MARGIN))
 
           px = sx + ((dx - sx) * p)
           py = sy + ((dy - sy) * p)
