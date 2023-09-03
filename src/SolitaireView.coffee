@@ -210,6 +210,28 @@ class SolitaireView extends Component
     else
       @tweening = false
 
+  calcArrowAngle: (srcX, srcY, dstX, dstY) ->
+    dx = dstX - srcX
+    dy = dstY - srcY
+
+    if dx == -1 and dy == 0
+      return 180
+    if dx == -1 and dy == -1
+      return -135
+    if dx == 0 and dy == -1
+      return -90
+    if dx == 1 and dy == -1
+      return -45
+    if dx == 1 and dy == 0
+      return 0
+    if dx == 1 and dy == 1
+      return 45
+    if dx == 0 and dy == 1
+      return 90
+    if dx == -1 and dy == 1
+      return 135
+    return null
+
   render: ->
     gameState = @props.gameState
     @adjustTimer(gameState)
@@ -534,7 +556,11 @@ class SolitaireView extends Component
       ]
 
     if gameState.grid?
-      for colIndex in [0...gameState.grid.length]
+      grid = gameState.grid
+      if @props.app.tweens? and (@props.app.tweens.length > 0) and @props.app.tweens[0].grid?
+        # The fake grid snapshot from the past, for animations
+        grid = @props.app.tweens[0].grid
+      for colIndex in [0...grid.length]
         cardInfo =
           key: "gridcolguide#{colIndex}"
           raw: cardutils.ROAD
@@ -544,40 +570,76 @@ class SolitaireView extends Component
           type: 'background'
           outerIndex: 0
           innerIndex: 0
-          tapped: true
+          rotate: 90
         @renderCard(cardInfo, renderInfo, listenerInfo)
-      for rowIndex in [0...gameState.grid[0].length]
+      for rowIndex in [0...grid[0].length]
+        raw = cardutils.ROAD
+        if gameState.tank[rowIndex]
+          raw = cardutils.TANK
         cardInfo =
           key: "gridrowguide#{rowIndex}"
-          raw: cardutils.ROAD
+          raw: raw
           x: renderOffsetL - (@renderScalePixels * 0.01)
           y: renderOffsetT + (@renderScalePixels * ((rowIndex + 1) + CENTER_CARD_MARGIN))
           selected: false
           type: 'background'
           outerIndex: 0
           innerIndex: 0
-          tapped: false
         @renderCard(cardInfo, renderInfo, listenerInfo)
 
-      for colIndex in [0...gameState.grid.length]
-        for rowIndex in [0...gameState.grid[0].length]
+      for colIndex in [0...grid.length]
+        for rowIndex in [0...grid[0].length]
+          if grid[colIndex][rowIndex].flare
+            cardInfo =
+              key: "gridflarebg#{colIndex}#{rowIndex}"
+              raw: cardutils.FLAREBG
+              x: renderOffsetL + (@renderScalePixels * ((colIndex + 1) - CENTER_CARD_MARGIN))
+              y: renderOffsetT + (@renderScalePixels * ((rowIndex + 1) + CENTER_CARD_MARGIN))
+              selected: false
+              type: 'grid'
+              outerIndex: colIndex
+              innerIndex: rowIndex
+            @renderCard(cardInfo, renderInfo, listenerInfo)
           isSelected = false
           if (gameState.selection.type == 'grid') and (colIndex == gameState.selection.outerIndex) and (rowIndex == gameState.selection.innerIndex)
             isSelected = true
           raw = cardutils.GRID
-          if gameState.grid[colIndex][rowIndex]?
-            raw = gameState.grid[colIndex][rowIndex].raw
           cardInfo =
             key: "grid#{colIndex}#{rowIndex}"
-            raw: raw
+            raw: cardutils.GRID
             x: renderOffsetL + (@renderScalePixels * ((colIndex + 1) - CENTER_CARD_MARGIN))
             y: renderOffsetT + (@renderScalePixels * ((rowIndex + 1) + CENTER_CARD_MARGIN))
             selected: isSelected
             type: 'grid'
             outerIndex: colIndex
             innerIndex: rowIndex
-            tapped: false
+          if grid[colIndex][rowIndex].squad?
+            cardInfo.raw = grid[colIndex][rowIndex].squad.raw
+            if grid[colIndex][rowIndex].squad.tapped
+              cardInfo.rotate = 90
+            if grid[colIndex][rowIndex].squad.down
+              cardInfo.filter = "hue-rotate(180deg)"
+          if grid[colIndex][rowIndex].bad?
+            cardInfo.raw = grid[colIndex][rowIndex].bad
           @renderCard(cardInfo, renderInfo, listenerInfo)
+
+          sq = grid[colIndex][rowIndex].squad
+          if sq? and not isSelected and (sq.tx >= 0)
+            arrowAngle = @calcArrowAngle(colIndex, rowIndex, sq.tx, sq.ty)
+            if arrowAngle?
+              @renderedCards.push el 'img', {
+                key: "gridarrow#{colIndex}#{rowIndex}"
+                src: render.arrow
+                style:
+                  position: 'fixed'
+                  left: cardInfo.x
+                  width: renderScale * render.CARD_WIDTH
+                  height: renderScale * render.CARD_WIDTH
+                  transform: "rotate(#{arrowAngle}deg)"
+                  top: cardInfo.y
+                  opacity: 0.7
+                  pointerEvents: 'none'
+              }
 
       if gameState.phase?
         @renderedCards.push el 'div', {
@@ -589,7 +651,7 @@ class SolitaireView extends Component
             width: renderScale * render.CARD_WIDTH
             height: renderScale * render.CARD_WIDTH
             lineHeight: "#{renderScale * render.CARD_WIDTH}px"
-            top: @props.y + renderOffsetT + (@renderScalePixels * (1 + CENTER_CARD_MARGIN)) - (renderScale * render.CARD_WIDTH)
+            top: renderOffsetT + (@renderScalePixels * (1 + CENTER_CARD_MARGIN)) - (renderScale * render.CARD_WIDTH)
             fontFamily: 'monospace'
             fontSize: "#{@renderScalePixels * 0.15}px"
             color: '#fff'
@@ -627,6 +689,15 @@ class SolitaireView extends Component
           px = sx + ((dx - sx) * p)
           py = sy + ((dy - sy) * p)
 
+          if tween.sr? and tween.dr?
+            r = tween.sr + ((tween.dr - tween.sr) * p)
+          else
+            r = null
+          if tween.so? and tween.do?
+            o = tween.so + ((tween.do - tween.so) * p)
+          else
+            o = null
+
           cardInfo =
             key: "twen#{processID}#{tweenIndex}"
             raw: tween.raw
@@ -636,7 +707,10 @@ class SolitaireView extends Component
             type: 'grid'
             outerIndex: colIndex
             innerIndex: rowIndex
-            tapped: false
+          if r?
+            cardInfo.rotate = r
+          if o?
+            cardInfo.opacity = o
           @renderCard(cardInfo, renderInfo, listenerInfo)
 
       remainingTweens = []

@@ -68,6 +68,7 @@ import cardGrid from "./cards/grid.png"
 import cardAnvil from "./cards/anvil.png"
 import cardAthlete from "./cards/athlete.png"
 import cardFlare from "./cards/flare.png"
+import cardFlareBG from "./cards/flarebg.png"
 import cardHammer from "./cards/hammer.png"
 import cardInfantry1 from "./cards/infantry1.png"
 import cardInfantry2 from "./cards/infantry2.png"
@@ -77,6 +78,10 @@ import cardMachinegun from "./cards/machinegun.png"
 import cardMortar from "./cards/mortar.png"
 import cardNatural from "./cards/natural.png"
 import cardPacifist from "./cards/pacifist.png"
+import cardTank from "./cards/tank.png"
+import cardMouse from "./cards/mouse.png"
+
+import arrowImg from "./cards/arrow.png"
 
 CARD_URLS = [ card0, card1, card2, card3, card4, card5, card6, card7, card8, card9,
 card10, card11, card12, card13, card14, card15, card16, card17, card18,
@@ -103,6 +108,8 @@ for preloadUrl in CARD_URLS.concat(OTHER_CARDS)
 export CARD_WIDTH = 119
 export CARD_HEIGHT = 162
 export CARD_ASPECT_RATIO = CARD_WIDTH / CARD_HEIGHT
+
+export arrow = arrowImg
 
 easeInOutQuad = (x) ->
   if x < 0.5 
@@ -217,8 +224,23 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
     url = cardPacifist
     val = 0
     suit = 0
+  else if cardInfo.raw == cardutils.TANK
+    url = cardTank
+    val = 0
+    suit = 0
+  else if cardInfo.raw == cardutils.MOUSE
+    url = cardMouse
+    val = 0
+    suit = 0
   else if cardInfo.raw == cardutils.GRID
     url = cardGrid
+    val = 0
+    suit = 0
+    cardStyle.left = x - ((CARD_HEIGHT - CARD_WIDTH) * renderInfo.scale / 2)
+    cardStyle.width = CARD_HEIGHT * renderInfo.scale
+    cardStyle.height = CARD_HEIGHT * renderInfo.scale
+  else if cardInfo.raw == cardutils.FLAREBG
+    url = cardFlareBG
     val = 0
     suit = 0
     cardStyle.left = x - ((CARD_HEIGHT - CARD_WIDTH) * renderInfo.scale / 2)
@@ -236,8 +258,12 @@ export card = (cardInfo, renderInfo, listenerInfo) ->
     cardStyle.border = "1px solid rgba(0, 0, 0, 0.5)"
     cardStyle.borderRadius = "10px"
 
-  if cardInfo.tapped
-    cardStyle.transform = "rotate(90deg)"
+  if cardInfo.rotate?
+    cardStyle.transform = "rotate(#{cardInfo.rotate}deg)"
+  if cardInfo.opacity?
+    cardStyle.opacity = cardInfo.opacity
+  if cardInfo.filter?
+    cardStyle.filter = cardInfo.filter
 
   stopPropagation = true
   if isSelected

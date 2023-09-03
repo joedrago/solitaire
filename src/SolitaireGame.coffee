@@ -37,6 +37,7 @@ class SolitaireGame
       click: true
       won: true
       lost: true
+      phase: true
 
     modeProps =
       name: true
@@ -142,6 +143,7 @@ class SolitaireGame
   phase: ->
     if @modes[@mode]? and @modes[@mode].phase?
       @modes[@mode].phase()
+      @queueSave()
 
   # -----------------------------------------------------------------------------------------------
   # Generic helpers
