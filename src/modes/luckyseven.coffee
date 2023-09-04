@@ -3,6 +3,9 @@ import * as cardutils from '../cardutils'
 MANEUVER = "Maneuver"
 ATTACK = "Attack"
 
+WON = "You Win!"
+LOST = "You Lost!"
+
 mode =
   name: "Lucky Seven"
   help: """
@@ -49,6 +52,8 @@ mode =
       foundations: []
       work: []
       grid: []
+      log: []
+      lastRound: false
       phase: MANEUVER
 
     xPos = [
@@ -65,6 +70,8 @@ mode =
       [5,6]
       [7,8]
     ]
+
+    @luckyLog("Dealing new game...")
 
     squad = [
       { raw: cardutils.ANVIL }
@@ -105,10 +112,12 @@ mode =
     @state.tank = [false, false, false, false]
 
     deadSquad = squad[squad.length - 1]
+    @luckyLog("Killing: #{@luckyName(deadSquad.raw)}", '#fcc')
     deadAdj = @luckyAdjacents(deadSquad.x, deadSquad.y)
     for adj in deadAdj
       if @state.grid[adj.x][adj.y].squad?
         @state.grid[adj.x][adj.y].squad.down = true
+        @luckyLog("...knocking down #{@luckyName(@state.grid[adj.x][adj.y].squad.raw)}", '#fff')
 
     @state.bads = [
       { raw: cardutils.MACHINEGUN, col:  1 }
@@ -148,6 +157,38 @@ mode =
     cardutils.shuffle(@state.bads)
     @luckyDealBads()
 
+  luckyName: (raw) ->
+    switch raw
+      when cardutils.ANVIL
+        return "The Anvil"
+      when cardutils.ATHLETE
+        return "The Athlete"
+      when cardutils.HAMMER
+        return "The Hammer"
+      when cardutils.JOKER
+        return "The Joker"
+      when cardutils.LEADER
+        return "The Leader"
+      when cardutils.NATURAL
+        return "The Natural"
+      when cardutils.PACIFIST
+        return "The Pacifist"
+      when cardutils.MOUSE
+        return "The Mouse"
+      when cardutils.MACHINEGUN
+        return "Machine Gun"
+      when cardutils.FLARE
+        return "Flare"
+      when cardutils.MORTAR
+        return "Mortar"
+      when cardutils.TANK
+        return "Tank"
+      when cardutils.INFANTRY1
+        return "Infantry1"
+      when cardutils.INFANTRY2
+        return "Infantry2"
+    return "Unknown"
+
   luckyAdjacents: (x, y) ->
     adj = []
     if x > 0
@@ -159,6 +200,14 @@ mode =
     if y < 3
       adj.push { x: x, y: y + 1 }
     return adj
+
+  luckyLog: (text, color = '#fff')->
+    @state.log.push {
+      text: text
+      color: color
+    }
+    while @state.log.length > cardutils.MAXLOG
+      @state.log.shift()
 
   luckyUntapSquad: ->
     for colIndex in [0...6]
@@ -195,23 +244,25 @@ mode =
     return -1
 
   luckyDealBads: ->
-    if @state.bads.length >= 4
+    if @state.bads.length < 4
+      @state.lastRound = true
+    else
       for row in [0...4]
         bad = @state.bads.shift()
 
-        # FINISH OTHER CARD TYPES HERE
-
         if bad.raw == cardutils.MORTAR
+          mortarList = []
           if @state.grid[bad.col][row].squad?
             @state.grid[bad.col][row].squad.down = true
             @state.grid[bad.col][row].squad.tapped = true
+            mortarList.push @luckyName(@state.grid[bad.col][row].squad.raw)
           adjs = @luckyAdjacents(bad.col, row)
           for adj in adjs
             if @state.grid[adj.x][adj.y].squad?
               @state.grid[adj.x][adj.y].squad.down = true
+              mortarList.push @luckyName(@state.grid[adj.x][adj.y].squad.raw)
           @addTweens [
-            {
-              grid: @luckyCloneGrid()
+            @luckyTween "Encounter", {
               d: 500
               raw: cardutils.MORTAR
               sx: bad.col
@@ -222,11 +273,15 @@ mode =
               dr: 359
             }
           ]
+          if mortarList.length == 0
+            @luckyLog("Encounter(#{row+1}) Mortar hits: nobody", '#ffc')
+          else
+            @luckyLog("Encounter(#{row+1}) Mortar hits: #{mortarList.join(', ')}", '#ffc')
         else if bad.raw == cardutils.FLARE
+          @luckyLog("Encounter(#{row+1}) Flare!", '#ffc')
           @state.grid[bad.col][row].flare = true
           @addTweens [
-            {
-              grid: @luckyCloneGrid()
+            @luckyTween "Encounter", {
               d: 500
               raw: cardutils.FLARE
               sx: bad.col
@@ -238,13 +293,14 @@ mode =
             }
           ]
         else if bad.raw == cardutils.TANK
+          @luckyLog("Encounter(#{row+1}) Tank!", '#ffc')
           @state.tank[row] = true
         else # anything else
           col = @luckyAdjustBadCol(bad.col, row)
           if col != -1
+            @luckyLog("Encounter(#{row+1}) #{@luckyName(bad.raw)} (column #{col+1})", '#ffc')
             @addTweens [
-              {
-                grid: @luckyCloneGrid()
+              @luckyTween "Encounter", {
                 d: 500
                 raw: bad.raw
                 sx: -2
@@ -269,6 +325,14 @@ mode =
   luckyCloneGrid: ->
     return JSON.parse(JSON.stringify(@state.grid))
 
+  luckyTween: (fakePhase, data) ->
+    t =
+      phase: fakePhase
+      grid: JSON.parse(JSON.stringify(@state.grid))
+    for k,v of data
+      t[k] = v
+    return t
+
   luckyHurtBads: ->
     targets = {}
     for colIndex in [0...6]
@@ -287,11 +351,10 @@ mode =
 
             console.log "[#{colIndex}, #{rowIndex}] attacking #{targetTag}: ", targets[targetTag]
             if (targets[targetTag].hp > 0) and (targets[targetTag].hp <= sqDamage)
+              @luckyLog("Killed: #{@luckyName(@state.grid[sq.tx][sq.ty].bad)}", '#cfc')
               @state.grid[sq.tx][sq.ty].bad = null
-              console.log "[#{colIndex}, #{rowIndex}] attacking #{targetTag}: (DIED)"
               @addTweens [
-                {
-                  grid: @luckyCloneGrid()
+                @luckyTween "Attacking!", {
                   d: 500
                   raw: bad
                   sx: sq.tx
@@ -304,6 +367,20 @@ mode =
               ]
             targets[targetTag].hp -= sqDamage
 
+  luckyCounts: ->
+    counts =
+      squad: 0
+      bads: 0
+    for colIndex in [0...6]
+      for rowIndex in [0...4]
+        sq = @state.grid[colIndex][rowIndex].squad
+        if sq?
+          counts.squad += 1
+        bad = @state.grid[colIndex][rowIndex].bad
+        if bad?
+          counts.bads += 1
+    return counts
+
   luckyHurtSquad: ->
     for colIndex in [0...6]
       for rowIndex in [0...4]
@@ -312,10 +389,10 @@ mode =
           adjs = @luckyAdjacents(colIndex, rowIndex)
           for adj in adjs
             if @state.grid[adj.x][adj.y].bad?
+              @luckyLog("Killed: #{@luckyName(@state.grid[colIndex][rowIndex].squad.raw)}", '#fcc')
               @state.grid[colIndex][rowIndex].squad = null
               @addTweens [
-                {
-                  grid: @luckyCloneGrid()
+                @luckyTween "lolesquads", {
                   d: 500
                   raw: sq.raw
                   sx: colIndex
@@ -329,18 +406,44 @@ mode =
               break
 
   phase: ->
-    console.log "lucky seven phase!"
+    console.log "lucky seven phase!", @state
+    if (@state.phase == WON) or (@state.phase == LOST)
+      return
+
+    alreadyLost = false
     if @state.phase == MANEUVER
       @luckyUntapSquad()
       @state.phase = ATTACK
     else if @state.phase == ATTACK
+      @luckyLog("---", '#666')
+
       # deal damage to mobs, add tweens showing it
       @luckyHurtBads()
       @luckyHurtSquad()
-      @luckyUntapSquad()
-      @luckyDealBads()
-      @state.tank = [false, false, false, false]
-      @state.phase = MANEUVER
+
+      if @state.lastRound
+        # Everything must be dead right here
+        counts = @luckyCounts()
+        if counts.bads > 0
+          alreadyLost = true
+
+      if not alreadyLost
+        @luckyUntapSquad()
+        @luckyDealBads()
+        @state.tank = [false, false, false, false]
+        @state.phase = MANEUVER
+
+    if alreadyLost
+      @luckyLog("You lose! (Ran out of rounds)", '#fcc')
+      @state.phase = LOST
+    else
+      counts = @luckyCounts()
+      if counts.squad == 0
+        @luckyLog("You lose! (Everyone is dead)", '#fcc')
+        @state.phase = LOST
+      else if (counts.bads == 0) and (@state.bads.length == 0)
+        @luckyLog("You win!", '#cfc')
+        @state.phase = WON
 
   luckyCanMoveTo: (sx, sy, dx, dy) ->
     # can't be tapped
@@ -425,9 +528,9 @@ mode =
       console.log @state.grid
 
   won: ->
-    return false
+    return (@state.phase == WON)
 
   lost: ->
-    return false
+    return (@state.phase == LOST)
 
 export default mode

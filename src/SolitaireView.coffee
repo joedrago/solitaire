@@ -266,12 +266,20 @@ class SolitaireView extends Component
       maxWidth = workWidth
     maxHeight = workBottom
 
+    boardAspectRatio = @props.width / @props.height
     if gameState.grid?
       maxWidth = 6.8
       maxHeight = 5.5
 
+      if boardAspectRatio > 1.45 # arbitrary, pick something better, probs based on the post-add ratio
+        wideGrid = true
+        maxWidth += 3
+      else
+        wideGrid = false
+        maxHeight += 1
+
+      console.log "boardAspectRatio: #{boardAspectRatio}, wideGrid: #{wideGrid}"
     maxAspectRatio = maxWidth / maxHeight
-    boardAspectRatio = @props.width / @props.height
 
     maxWidthPixels = maxWidth * UNIT
     maxHeightPixels = maxHeight * UNIT
@@ -556,6 +564,32 @@ class SolitaireView extends Component
       ]
 
     if gameState.grid?
+      if gameState.log? and (gameState.log.length > 0)
+        logTextSize = @renderScalePixels * 0.13
+        if wideGrid
+          logL = renderOffsetL + (@renderScalePixels * 6.1)
+          logT = renderOffsetT + (@renderScalePixels * ((render.CARD_HEIGHT - render.CARD_WIDTH) / render.CARD_HEIGHT)) + logTextSize
+        else
+          logL = renderOffsetL
+          logT = renderOffsetT + ((cardutils.MAXLOG - gameState.log.length) * logTextSize)
+        for logEntry, logIndex in gameState.log
+          @renderedCards.push el 'div', {
+            key: "logEntry#{logIndex}"
+            style:
+              color: logEntry.color
+              position: 'fixed'
+              left: logL + (@renderScalePixels * render.CARD_WIDTH / render.CARD_HEIGHT)
+              top: logT + (logIndex * logTextSize)
+              fontSize: "#{logTextSize}px"
+              fontWeight: 900
+              fontFamily: 'monospace'
+              pointerEvents: 'none'
+          }, ["* #{logEntry.text}"]
+
+      # hack: how bad is this?
+      if not wideGrid
+        renderOffsetT += @renderScalePixels
+
       grid = gameState.grid
       if @props.app.tweens? and (@props.app.tweens.length > 0) and @props.app.tweens[0].grid?
         # The fake grid snapshot from the past, for animations
@@ -642,6 +676,12 @@ class SolitaireView extends Component
               }
 
       if gameState.phase?
+        phaseName = gameState.phase
+        phaseColor = '#fff'
+        if gameState.lastRound
+          phaseColor = '#ff0'
+        if @props.app.tweens? and (@props.app.tweens.length > 0) and @props.app.tweens[0].phase?
+          phaseName = @props.app.tweens[0].phase
         @renderedCards.push el 'div', {
           key: 'next'
           style:
@@ -653,15 +693,15 @@ class SolitaireView extends Component
             lineHeight: "#{renderScale * render.CARD_WIDTH}px"
             top: renderOffsetT + (@renderScalePixels * (1 + CENTER_CARD_MARGIN)) - (renderScale * render.CARD_WIDTH)
             fontFamily: 'monospace'
-            fontSize: "#{@renderScalePixels * 0.15}px"
-            color: '#fff'
+            fontSize: "#{@renderScalePixels * 0.12}px"
+            color: phaseColor
             textShadow: '2px 2px #000'
           onMouseDown: (ev) =>
             ev.stopPropagation()
             @props.app.phase()
           onMouseUp: (ev) ->
             ev.stopPropagation()
-        }, [ gameState.phase ]
+        }, [ phaseName ]
 
 
     if @props.app.tweens? and (@props.app.tweens.length > 0)

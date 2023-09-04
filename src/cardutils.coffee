@@ -26,6 +26,8 @@ export FLAREBG = -22
 
 export FLIP_FLAG = 1024
 
+export MAXLOG = 10
+
 export shuffle = (array) ->
   for i in [array.length - 1 ... 0] by -1
     j = Math.floor(Math.random() * (i + 1))
