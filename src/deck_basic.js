@@ -1,7 +1,7 @@
-# Vector Playing Cards 3.2
-# https://totalnonsense.com/open-source-vector-playing-cards/
-# Copyright 2011,2021 – Chris Aguilar – conjurenation@gmail.com
-# Licensed under: LGPL 3.0 - https://www.gnu.org/licenses/lgpl-3.0.html
+// Vector Playing Cards 3.2
+// https://totalnonsense.com/open-source-vector-playing-cards/
+// Copyright 2011,2021 – Chris Aguilar – conjurenation@gmail.com
+// Licensed under: LGPL 3.0 - https://www.gnu.org/licenses/lgpl-3.0.html
 import card0 from "./deck_basic/0.svg"
 import card1 from "./deck_basic/1.svg"
 import card2 from "./deck_basic/2.svg"
@@ -60,23 +60,65 @@ import cardReserve from "./deck_basic/reserve.svg"
 import cardDead from "./deck_basic/dead.svg"
 import cardReady from "./deck_basic/ready.svg"
 
-export urls = [ card0, card1, card2, card3, card4, card5, card6, card7, card8, card9,
-card10, card11, card12, card13, card14, card15, card16, card17, card18,
-card19, card20, card21, card22, card23, card24, card25, card26, card27,
-card28, card29, card30, card31, card32, card33, card34, card35, card36,
-card37, card38, card39, card40, card41, card42, card43, card44, card45,
-card46, card47, card48, card49, card50, card51 ]
-
-export other = [
-  cardBack
-  cardGuide
-  cardReserve
-  cardDead
-  cardReady
+export const urls = [
+    card0,
+    card1,
+    card2,
+    card3,
+    card4,
+    card5,
+    card6,
+    card7,
+    card8,
+    card9,
+    card10,
+    card11,
+    card12,
+    card13,
+    card14,
+    card15,
+    card16,
+    card17,
+    card18,
+    card19,
+    card20,
+    card21,
+    card22,
+    card23,
+    card24,
+    card25,
+    card26,
+    card27,
+    card28,
+    card29,
+    card30,
+    card31,
+    card32,
+    card33,
+    card34,
+    card35,
+    card36,
+    card37,
+    card38,
+    card39,
+    card40,
+    card41,
+    card42,
+    card43,
+    card44,
+    card45,
+    card46,
+    card47,
+    card48,
+    card49,
+    card50,
+    card51
 ]
 
-export back = cardBack
-export guide = cardGuide
-export reserve = cardReserve
-export dead = cardDead
-export ready = cardReady
+export const other = [cardBack, cardGuide, cardReserve, cardDead, cardReady]
+
+export const back = cardBack
+export const guide = cardGuide
+export const reserve = cardReserve
+export const dead = cardDead
+export const ready = cardReady
