@@ -148,18 +148,18 @@ const CARD_URLS = [
 const OTHER_CARDS = [cardBack, cardGuide, cardReserve, cardDead, cardReady]
 
 window.solitairePreloadedImages = []
-for (var preloadUrl of Array.from(CARD_URLS.concat(OTHER_CARDS))) {
+for (let preloadUrl of CARD_URLS.concat(OTHER_CARDS)) {
     // console.log "Preloading: #{preloadUrl}"
     var img = new Image()
     img.src = preloadUrl
     window.solitairePreloadedImages.push(img)
 }
 
-export var CARD_WIDTH = 119
-export var CARD_HEIGHT = 162
-export var CARD_ASPECT_RATIO = CARD_WIDTH / CARD_HEIGHT
+export const CARD_WIDTH = 119
+export const CARD_HEIGHT = 162
+export const CARD_ASPECT_RATIO = CARD_WIDTH / CARD_HEIGHT
 
-export var arrow = arrowImg
+export const arrow = arrowImg
 
 const easeInOutQuad = function (x) {
     if (x < 0.5) {
@@ -169,7 +169,7 @@ const easeInOutQuad = function (x) {
     }
 }
 
-export var card = function (cardInfo, renderInfo, listenerInfo) {
+export const card = function (cardInfo, renderInfo, listenerInfo) {
     let suit, url, val
     const { type } = cardInfo
     const { outerIndex } = cardInfo
