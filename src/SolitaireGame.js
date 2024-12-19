@@ -77,7 +77,7 @@ class SolitaireGame {
         }
 
         this.mode = payload.mode
-        this.hard = payload.hard === true
+        this.hard = payload.hard == true
         this.state = payload.state
         this.undoStack = []
         console.log("Loaded.")
@@ -182,7 +182,7 @@ class SolitaireGame {
 
     findFoundationSuitIndex(raw) {
         let f, fIndex
-        if (this.state.foundations.length === 0) {
+        if (this.state.foundations.length == 0) {
             return -1
         }
 
@@ -192,10 +192,7 @@ class SolitaireGame {
             f = this.state.foundations[fIndex]
             if (f >= 0) {
                 let dstInfo = cardutils.info(f)
-                if (
-                    srcInfo.suit === dstInfo.suit &&
-                    (srcInfo.value === dstInfo.value + 1 || srcInfo.value === dstInfo.value - 12)
-                ) {
+                if (srcInfo.suit == dstInfo.suit && (srcInfo.value == dstInfo.value + 1 || srcInfo.value == dstInfo.value - 12)) {
                     return fIndex
                 }
             }
@@ -247,7 +244,7 @@ class SolitaireGame {
             // console.log "canAutoWin: false (won)"
             return false
         }
-        if (this.state.foundations.length === 0) {
+        if (this.state.foundations.length == 0) {
             // console.log "canAutoWin: false (no foundations)"
             return false
         }
@@ -307,7 +304,7 @@ class SolitaireGame {
                 break
             case "work":
                 srcCol = this.state.work[outerIndex]
-                if (innerIndex !== srcCol.length - 1) {
+                if (innerIndex != srcCol.length - 1) {
                     return false
                 }
                 src = srcCol[innerIndex]
@@ -324,7 +321,7 @@ class SolitaireGame {
             let sendHome = false
             if (this.state.foundations[dstIndex] >= 0) {
                 const dstInfo = cardutils.info(this.state.foundations[dstIndex])
-                if (srcInfo.value === dstInfo.value + 1 || srcInfo.value === dstInfo.value - 12) {
+                if (srcInfo.value == dstInfo.value + 1 || srcInfo.value == dstInfo.value - 12) {
                     sendHome = true
                 }
             } else {
@@ -332,7 +329,7 @@ class SolitaireGame {
                 if (this.state.foundationBase != null) {
                     ;({ foundationBase } = this.state)
                 }
-                if (srcInfo.value === foundationBase) {
+                if (srcInfo.value == foundationBase) {
                     sendHome = true
                 }
             }
@@ -396,9 +393,9 @@ class SolitaireGame {
             innerIndex = 0
         }
         if (
-            this.state.selection.type === type &&
-            this.state.selection.outerIndex === outerIndex &&
-            this.state.selection.innerIndex === innerIndex
+            this.state.selection.type == type &&
+            this.state.selection.outerIndex == outerIndex &&
+            this.state.selection.innerIndex == innerIndex
         ) {
             // Toggle
             type = "none"

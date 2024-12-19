@@ -92,13 +92,13 @@ mode.freecellUpdateCount = function () {
     let col
     let count = 1
     for (col of this.state.reserve.cols) {
-        if (col.length === 0) {
+        if (col.length == 0) {
             count += 1
         }
     }
 
     for (col of this.state.work) {
-        if (col.length === 0) {
+        if (col.length == 0) {
             count *= 2
         }
     }
@@ -126,7 +126,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
         // -------------------------------------------------------------------------------------------
         case "draw":
             // Draw some cards
-            if (!this.state.hard && this.state.draw.cards.length === 0) {
+            if (!this.state.hard && this.state.draw.cards.length == 0) {
                 this.state.draw.cards = this.state.pile.cards
                 this.state.pile.cards = []
             } else {
@@ -153,22 +153,22 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
 
             while (true) {
                 // create a gauntlet of breaks. if we survive them all, move the card
-                if (src.length !== 1) {
+                if (src.length != 1) {
                     break
                 }
                 var srcInfo = cardutils.info(src[0])
                 if (this.state.foundations[outerIndex] < 0) {
                     // empty
-                    if (srcInfo.value !== 0) {
+                    if (srcInfo.value != 0) {
                         // Ace
                         break
                     }
                 } else {
                     var dstInfo = cardutils.info(this.state.foundations[outerIndex])
-                    if (srcInfo.suit !== dstInfo.suit) {
+                    if (srcInfo.suit != dstInfo.suit) {
                         break
                     }
-                    if (srcInfo.value !== dstInfo.value + 1) {
+                    if (srcInfo.value != dstInfo.value + 1) {
                         break
                     }
                 }
@@ -184,10 +184,10 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
         case "reserve":
             src = this.getSelection()
 
-            var srcIsDest = this.state.selection.type === "reserve" && this.state.selection.outerIndex === outerIndex
+            var srcIsDest = this.state.selection.type == "reserve" && this.state.selection.outerIndex == outerIndex
             if (src.length > 0 && !srcIsDest) {
                 // Moving into reserve
-                if (src.length === 1 && this.state.reserve.cols[outerIndex].length === 0) {
+                if (src.length == 1 && this.state.reserve.cols[outerIndex].length == 0) {
                     this.state.reserve.cols[outerIndex].push(src[0])
                     this.eatSelection()
                 }
@@ -207,7 +207,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
         case "work":
             src = this.getSelection()
 
-            srcIsDest = this.state.selection.type === "work" && this.state.selection.outerIndex === outerIndex
+            srcIsDest = this.state.selection.type == "work" && this.state.selection.outerIndex == outerIndex
             if (src.length > 0 && !srcIsDest) {
                 // Moving into work
 
@@ -236,7 +236,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
                 while (innerIndex > stopIndex) {
                     var lowerInfo = cardutils.info(col[innerIndex])
                     var upperInfo = cardutils.info(col[innerIndex - 1])
-                    if (lowerInfo.value !== upperInfo.value - 1 || lowerInfo.red === upperInfo.red) {
+                    if (lowerInfo.value != upperInfo.value - 1 || lowerInfo.red == upperInfo.red) {
                         break
                     }
                     innerIndex -= 1

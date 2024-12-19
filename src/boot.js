@@ -9,7 +9,7 @@ import App from "./App"
 window.onload = function () {
     const ua = navigator.userAgent
     console.log(`UA: ${ua}`)
-    if (ua.indexOf("Chrome") === -1) {
+    if (ua.indexOf("Chrome") == -1) {
         console.log("Safari'ifying body")
         const bodyElement = document.getElementsByTagName("body")[0]
         bodyElement.style.position = "fixed"

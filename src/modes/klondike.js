@@ -73,7 +73,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
         // -------------------------------------------------------------------------------------------
         case "draw":
             // Draw some cards
-            if (!this.state.hard && this.state.draw.cards.length === 0) {
+            if (!this.state.hard && this.state.draw.cards.length == 0) {
                 this.state.draw.cards = this.state.pile.cards
                 this.state.pile.cards = []
             } else {
@@ -101,25 +101,25 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
             let src = this.getSelection()
 
             // -----------------------------------------------------------------------------------------
-            if (type === "foundation") {
+            if (type == "foundation") {
                 while (true) {
                     // create a gauntlet of breaks. if we survive them all, move the card
-                    if (src.length !== 1) {
+                    if (src.length != 1) {
                         break
                     }
                     let srcInfo = cardutils.info(src[0])
                     if (this.state.foundations[outerIndex] < 0) {
                         // empty
-                        if (srcInfo.value !== 0) {
+                        if (srcInfo.value != 0) {
                             // Ace
                             break
                         }
                     } else {
                         let dstInfo = cardutils.info(this.state.foundations[outerIndex])
-                        if (srcInfo.suit !== dstInfo.suit) {
+                        if (srcInfo.suit != dstInfo.suit) {
                             break
                         }
-                        if (srcInfo.value !== dstInfo.value + 1) {
+                        if (srcInfo.value != dstInfo.value + 1) {
                             break
                         }
                     }
@@ -133,7 +133,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
                 // ---------------------------------------------------------------------------------------
             } else {
                 // type == work
-                const sameWorkPile = this.state.selection.type === "work" && this.state.selection.outerIndex === outerIndex
+                const sameWorkPile = this.state.selection.type == "work" && this.state.selection.outerIndex == outerIndex
                 if (src.length > 0 && !sameWorkPile) {
                     // Moving into work
 
@@ -164,7 +164,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
                 } else {
                     // Selecting a fresh column
                     const col = this.state.work[outerIndex]
-                    const wasClickingLastCard = innerIndex === col.length - 1
+                    const wasClickingLastCard = innerIndex == col.length - 1
 
                     innerIndex = 0 // "All packed cards in a column must be moved as a unit to other columns."
                     while (innerIndex < col.length && col[innerIndex] & cardutils.FLIP_FLAG) {
@@ -177,13 +177,13 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
                     while (innerIndex > stopIndex) {
                         let lowerInfo = cardutils.info(col[innerIndex])
                         let upperInfo = cardutils.info(col[innerIndex - 1])
-                        if (lowerInfo.value !== upperInfo.value - 1) {
+                        if (lowerInfo.value != upperInfo.value - 1) {
                             break
                         }
                         innerIndex -= 1
                     }
 
-                    const isClickingLastCard = innerIndex === col.length - 1
+                    const isClickingLastCard = innerIndex == col.length - 1
 
                     if (wasClickingLastCard && !isClickingLastCard) {
                         this.select(type, outerIndex, col.length - 1)
@@ -203,7 +203,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
 }
 
 mode.won = function () {
-    return this.state.draw.cards.length === 0 && this.state.pile.cards.length === 0 && this.workPileEmpty()
+    return this.state.draw.cards.length == 0 && this.state.pile.cards.length == 0 && this.workPileEmpty()
 }
 
 export default mode

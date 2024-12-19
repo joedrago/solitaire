@@ -80,7 +80,7 @@ mode.newGame = function () {
 mode.scorpionDeal = function () {
     for (let workIndex = 0; workIndex < this.state.work.length; workIndex++) {
         var work = this.state.work[workIndex]
-        if (this.state.draw.cards.length === 0) {
+        if (this.state.draw.cards.length == 0) {
             break
         }
         work.push(this.state.draw.cards.pop())
@@ -106,7 +106,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
             // Potential selections or destinations
             var src = this.getSelection()
 
-            var sameWorkPile = this.state.selection.type === "work" && this.state.selection.outerIndex === outerIndex
+            var sameWorkPile = this.state.selection.type == "work" && this.state.selection.outerIndex == outerIndex
             if (src.length > 0 && !sameWorkPile) {
                 // Moving into work
                 const dst = this.state.work[outerIndex]
@@ -152,10 +152,10 @@ mode.won = function () {
     // each work must either be empty or have a perfect 13 card run of same-suit in it
     for (let workIndex = 0; workIndex < this.state.work.length; workIndex++) {
         var work = this.state.work[workIndex]
-        if (work.length === 0) {
+        if (work.length == 0) {
             continue
         }
-        if (work.length !== 13) {
+        if (work.length != 13) {
             // console.log "column #{workIndex} isnt 13 cards"
             return false
         }
@@ -165,7 +165,7 @@ mode.won = function () {
             if (info.flip) {
                 return false
             }
-            if (info.value !== 12 - cIndex) {
+            if (info.value != 12 - cIndex) {
                 // console.log "column #{workIndex} card #{cIndex} breaks the pattern"
                 return false
             }

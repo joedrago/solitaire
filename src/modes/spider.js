@@ -90,20 +90,20 @@ mode.spiderRemoveSets = function () {
                 var raw = work[rawIndex]
                 var info = cardutils.info(raw)
                 if (kingPos >= 0) {
-                    if (info.value !== 12 - rawIndex + kingPos || info.suit !== kingInfo.suit) {
+                    if (info.value != 12 - rawIndex + kingPos || info.suit != kingInfo.suit) {
                         kingPos = -1
                         kingInfo = null
                     }
                 }
 
                 if (kingPos < 0) {
-                    if (info.value === 12 && !info.flip) {
+                    if (info.value == 12 && !info.flip) {
                         kingPos = rawIndex
                         kingInfo = info
                     }
                 }
 
-                if (kingPos >= 0 && rawIndex - kingPos === 12) {
+                if (kingPos >= 0 && rawIndex - kingPos == 12) {
                     foundOne = true
                     // @dumpCards "BEFORE REMOVE: ", @state.work[workIndex]
                     this.state.work[workIndex].splice(kingPos, 13)
@@ -126,7 +126,7 @@ mode.spiderRemoveSets = function () {
 mode.spiderDeal = function () {
     for (let workIndex = 0; workIndex < this.state.work.length; workIndex++) {
         var work = this.state.work[workIndex]
-        if (this.state.draw.cards.length === 0) {
+        if (this.state.draw.cards.length == 0) {
             break
         }
         work.push(this.state.draw.cards.pop())
@@ -152,7 +152,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
             // Potential selections or destinations
             var src = this.getSelection()
 
-            var sameWorkPile = this.state.selection.type === "work" && this.state.selection.outerIndex === outerIndex
+            var sameWorkPile = this.state.selection.type == "work" && this.state.selection.outerIndex == outerIndex
             if (src.length > 0 && !sameWorkPile) {
                 // Moving into work
                 const dst = this.state.work[outerIndex]
@@ -170,7 +170,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
             } else {
                 // Selecting a fresh column
                 const col = this.state.work[outerIndex]
-                if (innerIndex !== col.length - 1) {
+                if (innerIndex != col.length - 1) {
                     innerIndex = 0
                 }
                 while (innerIndex < col.length && col[innerIndex] & cardutils.FLIP_FLAG) {
@@ -183,7 +183,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
                 while (innerIndex > stopIndex) {
                     var lowerInfo = cardutils.info(col[innerIndex])
                     var upperInfo = cardutils.info(col[innerIndex - 1])
-                    if (lowerInfo.value !== upperInfo.value - 1 || lowerInfo.suit !== upperInfo.suit) {
+                    if (lowerInfo.value != upperInfo.value - 1 || lowerInfo.suit != upperInfo.suit) {
                         break
                     }
                     innerIndex -= 1
@@ -203,7 +203,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
 }
 
 mode.won = function () {
-    return this.state.draw.cards.length === 0 && this.state.pile.cards.length === 0 && this.workPileEmpty()
+    return this.state.draw.cards.length == 0 && this.state.pile.cards.length == 0 && this.workPileEmpty()
 }
 
 export default mode

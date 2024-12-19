@@ -76,14 +76,14 @@ mode.newGame = function () {
 }
 
 mode.golfCanPlay = function (raw) {
-    if (this.state.pile.cards.length === 0) {
+    if (this.state.pile.cards.length == 0) {
         return true
     } else {
         const srcInfo = cardutils.info(raw)
         const dstInfo = cardutils.info(this.state.pile.cards[this.state.pile.cards.length - 1])
-        if (Math.abs(srcInfo.value - dstInfo.value) === 1) {
+        if (Math.abs(srcInfo.value - dstInfo.value) == 1) {
             return true
-        } else if (Math.abs(srcInfo.value - dstInfo.value) === 12) {
+        } else if (Math.abs(srcInfo.value - dstInfo.value) == 12) {
             // Wrapping
             return true
         }
@@ -104,7 +104,7 @@ mode.golfHasPlays = function () {
 mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
     this.select("none")
 
-    const pileWasEmpty = this.state.pile.cards.length === 0
+    const pileWasEmpty = this.state.pile.cards.length == 0
 
     switch (type) {
         // -------------------------------------------------------------------------------------------
@@ -134,7 +134,7 @@ mode.click = function (type, outerIndex, innerIndex, isRightClick, isMouseUp) {
         if (this.workPileEmpty()) {
             this.state.timerEnd = cardutils.now()
             this.state.timerColor = "#3f3"
-        } else if (this.state.draw.cards.length === 0 && !this.golfHasPlays()) {
+        } else if (this.state.draw.cards.length == 0 && !this.golfHasPlays()) {
             this.state.timerEnd = cardutils.now()
             this.state.timerColor = "#ff0"
         }

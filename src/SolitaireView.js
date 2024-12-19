@@ -89,7 +89,7 @@ class SolitaireView extends Component {
     cardClick(type, outerIndex, innerIndex, x, y, isRightClick, isMouseUp) {
         if (isMouseUp) {
             this.resetSelectState()
-            if (this.tooCloseToDrag() || this.props.gameState.selection.type === "none") {
+            if (this.tooCloseToDrag() || this.props.gameState.selection.type == "none") {
                 return
             }
         }
@@ -98,7 +98,7 @@ class SolitaireView extends Component {
 
         if (!isMouseUp) {
             ;({ type } = this.props.app.state.gameState.selection)
-            if (type !== "none") {
+            if (type != "none") {
                 // console.log "gamestate ", @props.app.state.gameState
                 ;({ innerIndex } = this.props.app.state.gameState.selection)
                 ;({ outerIndex } = this.props.app.state.gameState.selection)
@@ -266,13 +266,13 @@ class SolitaireView extends Component {
         const workWidth = gameState.work.length
 
         let workTop = 0
-        if (gameState.draw.pos === "top" || gameState.foundations.length > 0) {
+        if (gameState.draw.pos == "top" || gameState.foundations.length > 0) {
             workTop = 1.25
         }
         let workBottom = workTop + 1 + (largestWork - 1) * WORK_CARD_OVERLAP
         if (
             workBottom < 4.1 &&
-            (gameState.draw.pos === "middle" || (gameState.reserve != null && gameState.reserve.pos === "middle"))
+            (gameState.draw.pos == "middle" || (gameState.reserve != null && gameState.reserve.pos == "middle"))
         ) {
             // Leave room for draw/reserve at the bottom of the screen
             workBottom = 4.1
@@ -324,11 +324,11 @@ class SolitaireView extends Component {
         }
 
         this.forgetCards()
-        if (gameState.draw.pos === "top" || gameState.draw.pos === "middle") {
-            if (gameState.draw.pos === "top") {
+        if (gameState.draw.pos == "top" || gameState.draw.pos == "middle") {
+            if (gameState.draw.pos == "top") {
                 drawOffsetL = 0
                 drawOffsetT = 0
-            } else if (gameState.reserve != null && gameState.reserve.pos === "middle") {
+            } else if (gameState.reserve != null && gameState.reserve.pos == "middle") {
                 drawOffsetL = 1 * this.renderScalePixels
                 drawOffsetT = 3 * this.renderScalePixels
             } else {
@@ -337,9 +337,9 @@ class SolitaireView extends Component {
             }
             // Top Left Draw Pile
             drawCard = cardutils.BACK
-            if (gameState.draw.cards.length === 0) {
+            if (gameState.draw.cards.length == 0) {
                 drawCard = cardutils.READY
-                if (gameState.draw.redeals === 0) {
+                if (gameState.draw.redeals == 0) {
                     drawCard = cardutils.DEAD
                 }
             }
@@ -393,7 +393,7 @@ class SolitaireView extends Component {
             ) {
                 let pile = gameState.pile.cards[pileIndex]
                 isSelected = false
-                if (gameState.selection.type === "pile" && pileIndex === gameState.pile.cards.length - 1) {
+                if (gameState.selection.type == "pile" && pileIndex == gameState.pile.cards.length - 1) {
                     isSelected = true
                 }
                 ;((pile, pileIndex, isSelected) => {
@@ -436,8 +436,8 @@ class SolitaireView extends Component {
                 let work = workColumn[workIndex]
                 isSelected = false
                 if (
-                    gameState.selection.type === "work" &&
-                    workColumnIndex === gameState.selection.outerIndex &&
+                    gameState.selection.type == "work" &&
+                    workColumnIndex == gameState.selection.outerIndex &&
                     workIndex >= gameState.selection.innerIndex
                 ) {
                     isSelected = true
@@ -480,7 +480,7 @@ class SolitaireView extends Component {
             })(foundation, foundationIndex)
             if (
                 this.state.sent != null &&
-                this.state.sent.foundationIndex === foundationIndex &&
+                this.state.sent.foundationIndex == foundationIndex &&
                 this.state.sent.prevFoundationRaw >= 0
             ) {
                 ;((foundation, foundationIndex) => {
@@ -497,7 +497,7 @@ class SolitaireView extends Component {
                     this.renderCard(cardInfo, renderInfo, listenerInfo)
                 })(foundation, foundationIndex)
             }
-            if (foundation !== cardutils.GUIDE) {
+            if (foundation != cardutils.GUIDE) {
                 ;((foundation, foundationIndex) => {
                     cardInfo = {
                         key: `found${foundationIndex}`,
@@ -515,10 +515,10 @@ class SolitaireView extends Component {
             currentL += this.renderScalePixels
         }
 
-        if (gameState.draw.pos === "bottom") {
+        if (gameState.draw.pos == "bottom") {
             // Bottom Left Draw Pile
             drawCard = cardutils.BACK
-            if (gameState.draw.cards.length === 0) {
+            if (gameState.draw.cards.length == 0) {
                 drawCard = cardutils.GUIDE
             }
 
@@ -536,7 +536,7 @@ class SolitaireView extends Component {
         }
 
         if (gameState.reserve != null) {
-            if (gameState.reserve.pos === "middle") {
+            if (gameState.reserve.pos == "middle") {
                 drawOffsetL = (maxWidth / 2 - 0.5) * this.renderScalePixels
                 drawOffsetT = 3 * this.renderScalePixels
             } else {
@@ -566,8 +566,8 @@ class SolitaireView extends Component {
                     let reserveIndex = col.length - 1
                     isSelected = false
                     if (
-                        gameState.selection.type === "reserve" &&
-                        colIndex === gameState.selection.outerIndex &&
+                        gameState.selection.type == "reserve" &&
+                        colIndex == gameState.selection.outerIndex &&
                         reserveIndex >= gameState.selection.innerIndex
                     ) {
                         isSelected = true
@@ -674,17 +674,17 @@ class SolitaireView extends Component {
 
         if (this.props.useTouch) {
             bgProps.onTouchStart = (e) => {
-                if (e.touches.length === 1) {
+                if (e.touches.length == 1) {
                     this.onBackground(false)
                 }
             }
             bgProps.onTouchEnd = (e) => {
-                if (e.touches.length === 0) {
+                if (e.touches.length == 0) {
                     this.onBackground(false)
                 }
             }
             bgProps.onTouchMove = (e) => {
-                if (e.touches.length === 1) {
+                if (e.touches.length == 1) {
                     this.onMouseMove(e.touches[0].clientX, e.touches[0].clientY)
                 }
             }

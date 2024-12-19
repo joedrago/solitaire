@@ -113,7 +113,7 @@ class App extends Component {
                     edge: "end",
                     checked: switchValue
                     // onChange={handleToggle('wifi')}
-                    // checked={checked.indexOf('wifi') !== -1}
+                    // checked={checked.indexOf('wifi') != -1}
                 })
             )
         }
