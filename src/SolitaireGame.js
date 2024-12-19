@@ -1,11 +1,3 @@
-/*
- * decaffeinate suggestions:
- * DS101: Remove unnecessary use of Array.from
- * DS102: Remove unnecessary code created because of implicit returns
- * DS205: Consider reworking code to avoid use of IIFEs
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
- */
 import * as cardutils from "./cardutils"
 
 // -------------------------------------------------------------------------------------------------
@@ -58,20 +50,16 @@ class SolitaireGame {
         const m = require(`./modes/${modeName}`).default
         this.modes[modeName] = {}
 
-        return (() => {
-            const result = []
-            for (var key in m) {
-                var val = m[key]
-                if (modeFuncs[key]) {
-                    result.push((this.modes[modeName][key] = val.bind(this)))
-                } else if (modeProps[key]) {
-                    result.push((this.modes[modeName][key] = val))
-                } else {
-                    result.push((this[key] = val.bind(this)))
-                }
+        for (let key in m) {
+            const val = m[key]
+            if (modeFuncs[key]) {
+                this.modes[modeName][key] = val.bind(this)
+            } else if (modeProps[key]) {
+                this.modes[modeName][key] = val
+            } else {
+                this[key] = val.bind(this)
             }
-            return result
-        })()
+        }
     }
 
     // -----------------------------------------------------------------------------------------------
@@ -108,13 +96,13 @@ class SolitaireGame {
             hard: this.hard,
             state: this.state
         }
-        return localStorage.setItem("save", JSON.stringify(payload))
+        localStorage.setItem("save", JSON.stringify(payload))
     }
     // console.log "Saved."
 
     queueSave() {
         // Don't bother queueing, just save immediately
-        return this.save()
+        this.save()
     }
 
     // if @saveTimeout?
@@ -132,13 +120,13 @@ class SolitaireGame {
     }
 
     pushUndo() {
-        return this.undoStack.push(JSON.stringify(this.state))
+        this.undoStack.push(JSON.stringify(this.state))
     }
 
     undo() {
         if (this.undoStack.length > 0) {
             this.state = JSON.parse(this.undoStack.pop())
-            return this.queueSave()
+            this.queueSave()
         }
     }
 
@@ -152,7 +140,7 @@ class SolitaireGame {
         if (this.modes[this.mode] != null) {
             this.modes[this.mode].newGame()
             this.undoStack = []
-            return this.save()
+            this.save()
         }
     }
 
@@ -175,7 +163,7 @@ class SolitaireGame {
                 this.pushUndo()
             }
             this.modes[this.mode].click(type, outerIndex, innerIndex, isRightClick, isMouseUp)
-            return this.queueSave()
+            this.queueSave()
         }
     }
 
@@ -196,7 +184,7 @@ class SolitaireGame {
     phase() {
         if (this.modes[this.mode] != null && this.modes[this.mode].phase != null) {
             this.modes[this.mode].phase()
-            return this.queueSave()
+            this.queueSave()
         }
     }
 
@@ -214,7 +202,7 @@ class SolitaireGame {
         for (fIndex = 0; fIndex < this.state.foundations.length; fIndex++) {
             f = this.state.foundations[fIndex]
             if (f >= 0) {
-                var dstInfo = cardutils.info(f)
+                let dstInfo = cardutils.info(f)
                 if (
                     srcInfo.suit === dstInfo.suit &&
                     (srcInfo.value === dstInfo.value + 1 || srcInfo.value === dstInfo.value - 12)
@@ -237,14 +225,14 @@ class SolitaireGame {
 
     dumpCards(prefix, cards) {
         const infos = []
-        for (var card of Array.from(cards)) {
+        for (let card of cards) {
             infos.push(cardutils.info(card))
         }
-        return console.log(prefix, infos)
+        console.log(prefix, infos)
     }
 
     workPileEmpty() {
-        for (var work of Array.from(this.state.work)) {
+        for (let work of this.state.work) {
             if (work.length > 0) {
                 return false
             }
@@ -256,7 +244,7 @@ class SolitaireGame {
         if (this.state.reserve == null) {
             return true
         }
-        for (var cols of Array.from(this.state.reserve.cols)) {
+        for (let cols of this.state.reserve.cols) {
             if (cols.length > 0) {
                 return false
             }
@@ -283,7 +271,7 @@ class SolitaireGame {
             return false
         }
         if (this.state.reserve != null) {
-            for (col of Array.from(this.state.reserve.cols)) {
+            for (col of this.state.reserve.cols) {
                 if (col.length > 0) {
                     // console.log "canAutoWin: false (has reserves)"
                     return false
@@ -292,13 +280,13 @@ class SolitaireGame {
         }
         for (let colIndex = 0; colIndex < this.state.work.length; colIndex++) {
             col = this.state.work[colIndex]
-            var last = 100
-            for (var raw of Array.from(col)) {
+            let last = 100
+            for (let raw of col) {
                 if (raw & cardutils.FLIP_FLAG) {
                     // console.log "canAutoWin: false (has flip)"
                     return false
                 }
-                var info = cardutils.info(raw)
+                let info = cardutils.info(raw)
                 if (info.value > last) {
                     // console.log "canAutoWin: false (not descending #{colIndex})"
                     return false
@@ -396,9 +384,9 @@ class SolitaireGame {
             return null
         }
         for (let workIndex = 0; workIndex < this.state.work.length; workIndex++) {
-            var work = this.state.work[workIndex]
+            let work = this.state.work[workIndex]
             if (work.length > 0) {
-                var sent = this.sendHome("work", workIndex, work.length - 1)
+                let sent = this.sendHome("work", workIndex, work.length - 1)
                 if (sent != null) {
                     this.queueSave()
                     return sent
@@ -429,11 +417,11 @@ class SolitaireGame {
             innerIndex = 0
         }
 
-        return (this.state.selection = {
+        this.state.selection = {
             type,
             outerIndex,
             innerIndex
-        })
+        }
     }
 
     eatSelection() {
@@ -447,7 +435,7 @@ class SolitaireGame {
                 }
                 break
             case "work":
-                var srcCol = this.state.work[this.state.selection.outerIndex]
+                let srcCol = this.state.work[this.state.selection.outerIndex]
                 if (this.state.selection.innerIndex >= 0) {
                     while (this.state.selection.innerIndex < srcCol.length) {
                         srcCol.pop()
@@ -459,7 +447,7 @@ class SolitaireGame {
                 }
                 break
         }
-        return this.select("none")
+        this.select("none")
     }
 
     getSelection() {
@@ -497,7 +485,7 @@ class SolitaireGame {
     // Tweens
 
     addTweens(tweens) {
-        return this.app.addTweens(tweens)
+        this.app.addTweens(tweens)
     }
 }
 

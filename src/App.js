@@ -1,11 +1,3 @@
-/*
- * decaffeinate suggestions:
- * DS101: Remove unnecessary use of Array.from
- * DS102: Remove unnecessary code created because of implicit returns
- * DS205: Consider reworking code to avoid use of IIFEs
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
- */
 import React, { Component } from "react"
 
 import Box from "@mui/material/Box"
@@ -81,12 +73,12 @@ class App extends Component {
                     useTouch: true
                 })
             }
-            return window.addEventListener("touchstart", touchDetector)
+            window.addEventListener("touchstart", touchDetector)
         }
     }
 
     onResize() {
-        return this.setState({
+        this.setState({
             width: window.innerWidth,
             height: window.innerHeight
         })
@@ -151,7 +143,6 @@ class App extends Component {
     }
 
     render() {
-        let mode
         const gameView = el(SolitaireView, {
             key: "gameview",
             gameState: this.state.gameState,
@@ -217,8 +208,8 @@ class App extends Component {
         )
         drawerItems.push(el(Divider, { key: "playAgainDivider" }))
 
-        for (var modeName in this.game.modes) {
-            mode = this.game.modes[modeName]
+        for (let modeName in this.game.modes) {
+            let mode = this.game.modes[modeName]
             ;((drawerItems, modeName, mode) => {
                 return drawerItems.push(
                     this.createDrawerButton(`newGame${modeName}`, GamesIcon, `New Game: ${mode.name}`, () => {
@@ -500,7 +491,7 @@ class App extends Component {
 
     gameClick(type, outerIndex, innerIndex, isRightClick, isMouseUp) {
         this.game.click(type, outerIndex, innerIndex, isRightClick, isMouseUp)
-        return this.setState({
+        this.setState({
             gameState: this.game.state,
             winToastOpen: this.game.won(),
             loseToastOpen: this.game.lost()
@@ -519,7 +510,7 @@ class App extends Component {
 
     phase() {
         this.game.phase()
-        return this.setState({
+        this.setState({
             gameState: this.game.state,
             winToastOpen: this.game.won(),
             loseToastOpen: this.game.lost()
@@ -530,15 +521,11 @@ class App extends Component {
         console.log("addTweens: ", tweens)
         const id = this.nextTweenID
         this.nextTweenID += 1
-        return (() => {
-            const result = []
-            for (var tween of Array.from(tweens)) {
-                tween.id = id
-                tween.done = false
-                result.push(this.tweens.push(tween))
-            }
-            return result
-        })()
+        for (let tween of tweens) {
+            tween.id = id
+            tween.done = false
+            this.tweens.push(tween)
+        }
     }
 }
 
