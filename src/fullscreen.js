@@ -1,9 +1,4 @@
-/*
- * decaffeinate suggestions:
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
- */
-var fullscreen = {
+const fullscreen = {
     available() {
         const available = false
         if (document.documentElement.requestFullScreen) {
@@ -28,9 +23,6 @@ var fullscreen = {
     },
 
     enable(enabled) {
-        if (enabled == null) {
-            enabled = true
-        }
         if (!fullscreen.available()) {
             return
         }

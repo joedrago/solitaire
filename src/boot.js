@@ -1,8 +1,3 @@
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
- */
 import webManifest from "./manifest.webmanifest"
 import logoPNG from "./logo.png"
 
@@ -26,5 +21,5 @@ window.onload = function () {
 
     const app = new App()
     const root = ReactDOM.createRoot(document.getElementById("root"))
-    return root.render(React.createElement(App))
+    root.render(React.createElement(App))
 }
