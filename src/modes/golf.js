@@ -60,13 +60,9 @@ mode.newGame = function () {
         cardCount = 5
     }
     const faceDownCount = this.hard ? 3 : 2
-    for (
-        let columnIndex = 0, end = columnCount, asc = 0 <= end;
-        asc ? columnIndex < end : columnIndex > end;
-        asc ? columnIndex++ : columnIndex--
-    ) {
+    for (let columnIndex = 0; columnIndex < columnCount; ++columnIndex) {
         var col = []
-        for (var i = 0, end1 = cardCount, asc1 = 0 <= end1; asc1 ? i < end1 : i > end1; asc1 ? i++ : i--) {
+        for (var i = 0; i < cardCount; ++i) {
             col.push(deck.shift())
         }
         this.state.work.push(col)
@@ -92,7 +88,7 @@ mode.golfCanPlay = function (raw) {
 }
 
 mode.golfHasPlays = function () {
-    for (let colIndex = 0; colIndex < this.state.work.length; colIndex++) {
+    for (let colIndex = 0; colIndex < this.state.work.length; ++colIndex) {
         var col = this.state.work[colIndex]
         if (col.length > 0 && this.golfCanPlay(col[col.length - 1])) {
             return true

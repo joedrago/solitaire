@@ -60,7 +60,7 @@ mode.newGame = function () {
 
     const deck = cardutils.shuffle(cardutils.range(0, 52))
 
-    for (let columnIndex = 0; columnIndex < 8; columnIndex++) {
+    for (let columnIndex = 0; columnIndex < 8; ++columnIndex) {
         this.state.work[columnIndex] = [deck.shift()]
     }
 
@@ -77,7 +77,7 @@ mode.newGame = function () {
 }
 
 mode.eagleDealReserve = function () {
-    for (let workIndex = 0; workIndex < this.state.work.length; workIndex++) {
+    for (let workIndex = 0; workIndex < this.state.work.length; ++workIndex) {
         let work = this.state.work[workIndex]
         if (this.state.reserve.cols[0].length < 1) {
             break

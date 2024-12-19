@@ -188,7 +188,7 @@ class SolitaireGame {
 
         // find a matching suit
         const srcInfo = cardutils.info(raw)
-        for (fIndex = 0; fIndex < this.state.foundations.length; fIndex++) {
+        for (fIndex = 0; fIndex < this.state.foundations.length; ++fIndex) {
             f = this.state.foundations[fIndex]
             if (f >= 0) {
                 let dstInfo = cardutils.info(f)
@@ -199,7 +199,7 @@ class SolitaireGame {
         }
 
         // find a free slot
-        for (fIndex = 0; fIndex < this.state.foundations.length; fIndex++) {
+        for (fIndex = 0; fIndex < this.state.foundations.length; ++fIndex) {
             f = this.state.foundations[fIndex]
             if (f < 0) {
                 return fIndex
@@ -264,7 +264,7 @@ class SolitaireGame {
                 }
             }
         }
-        for (let colIndex = 0; colIndex < this.state.work.length; colIndex++) {
+        for (let colIndex = 0; colIndex < this.state.work.length; ++colIndex) {
             col = this.state.work[colIndex]
             let last = 100
             for (let raw of col) {
@@ -369,7 +369,7 @@ class SolitaireGame {
         if (!this.canAutoWin()) {
             return null
         }
-        for (let workIndex = 0; workIndex < this.state.work.length; workIndex++) {
+        for (let workIndex = 0; workIndex < this.state.work.length; ++workIndex) {
             let work = this.state.work[workIndex]
             if (work.length > 0) {
                 let sent = this.sendHome("work", workIndex, work.length - 1)

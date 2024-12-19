@@ -59,16 +59,16 @@ mode.newGame = function () {
     )
     const kings = cardutils.shuffle([12, 25, 38, 51])
 
-    for (let columnIndex = 0; columnIndex < 13; columnIndex++) {
+    for (let columnIndex = 0; columnIndex < 13; ++columnIndex) {
         this.state.work.push([])
     }
 
     const kingPositions = cardutils.shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]).slice(0, 4)
-    for (let pIndex = 0; pIndex < kingPositions.length; pIndex++) {
+    for (let pIndex = 0; pIndex < kingPositions.length; ++pIndex) {
         let p = kingPositions[pIndex]
         this.state.work[p].push(kings[pIndex])
     }
-    for (let columnIndex = 0; columnIndex < 13; columnIndex++) {
+    for (let columnIndex = 0; columnIndex < 13; ++columnIndex) {
         let col = this.state.work[columnIndex]
         if (this.hard) {
             col.push(deck.shift() | cardutils.FLIP_FLAG)

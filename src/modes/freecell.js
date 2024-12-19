@@ -72,7 +72,7 @@ mode.newGame = function () {
     }
 
     const deck = cardutils.shuffle(cardutils.range(0, 52))
-    for (let columnIndex = 0; columnIndex < 8; columnIndex++) {
+    for (let columnIndex = 0; columnIndex < 8; ++columnIndex) {
         var col = []
         var colCount = 6
         if (columnIndex < 4) {

@@ -386,11 +386,7 @@ class SolitaireView extends Component {
             }
             this.renderCard(cardInfo, renderInfo, listenerInfoNoop)
 
-            for (
-                let pileIndex = startPileIndex, end = gameState.pile.cards.length, asc = startPileIndex <= end;
-                asc ? pileIndex < end : pileIndex > end;
-                asc ? pileIndex++ : pileIndex--
-            ) {
+            for (let pileIndex = startPileIndex; pileIndex < gameState.pile.cards.length; ++pileIndex) {
                 let pile = gameState.pile.cards[pileIndex]
                 isSelected = false
                 if (gameState.selection.type == "pile" && pileIndex == gameState.pile.cards.length - 1) {
@@ -416,7 +412,7 @@ class SolitaireView extends Component {
         }
 
         let currentL = renderOffsetL + CENTER_CARD_MARGIN * this.renderScalePixels
-        for (let workColumnIndex = 0; workColumnIndex < gameState.work.length; workColumnIndex++) {
+        for (let workColumnIndex = 0; workColumnIndex < gameState.work.length; ++workColumnIndex) {
             let workIndex = 0
             let workColumn = gameState.work[workColumnIndex]
             ;((workColumnIndex, workIndex) => {
@@ -432,7 +428,7 @@ class SolitaireView extends Component {
                 }
                 this.renderCard(cardInfo, renderInfo, listenerInfo)
             })(workColumnIndex, workIndex)
-            for (workIndex = 0; workIndex < workColumn.length; workIndex++) {
+            for (workIndex = 0; workIndex < workColumn.length; ++workIndex) {
                 let work = workColumn[workIndex]
                 isSelected = false
                 if (
@@ -463,7 +459,7 @@ class SolitaireView extends Component {
         }
 
         currentL = renderOffsetL + (foundationOffsetL + CENTER_CARD_MARGIN) * this.renderScalePixels
-        for (let foundationIndex = 0; foundationIndex < gameState.foundations.length; foundationIndex++) {
+        for (let foundationIndex = 0; foundationIndex < gameState.foundations.length; ++foundationIndex) {
             let foundation = gameState.foundations[foundationIndex]
             ;((foundation, foundationIndex) => {
                 cardInfo = {
@@ -544,7 +540,7 @@ class SolitaireView extends Component {
                 drawOffsetT = 0
             }
 
-            for (let colIndex = 0; colIndex < gameState.reserve.cols.length; colIndex++) {
+            for (let colIndex = 0; colIndex < gameState.reserve.cols.length; ++colIndex) {
                 let col = gameState.reserve.cols[colIndex]
                 drawCard = cardutils.RESERVE
                 if (col.length > 1) {

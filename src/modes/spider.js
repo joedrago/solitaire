@@ -62,9 +62,9 @@ mode.newGame = function () {
             .concat([39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51])
         deck = cardutils.shuffle(reds.concat(blacks))
     }
-    for (let columnIndex = 0; columnIndex < 10; columnIndex++) {
+    for (let columnIndex = 0; columnIndex < 10; ++columnIndex) {
         var col = []
-        for (var i = 0; i < 4; i++) {
+        for (var i = 0; i < 4; ++i) {
             col.push(deck.shift() | cardutils.FLIP_FLAG)
         }
         col.push(deck.shift())
@@ -77,7 +77,7 @@ mode.newGame = function () {
 mode.spiderRemoveSets = function () {
     while (true) {
         var foundOne = false
-        for (var workIndex = 0; workIndex < this.state.work.length; workIndex++) {
+        for (var workIndex = 0; workIndex < this.state.work.length; ++workIndex) {
             var work = this.state.work[workIndex]
             if (work.length < 13) {
                 // optimization: this can't have a full set in it
@@ -86,7 +86,7 @@ mode.spiderRemoveSets = function () {
 
             var kingPos = -1
             var kingInfo = null
-            for (var rawIndex = 0; rawIndex < work.length; rawIndex++) {
+            for (var rawIndex = 0; rawIndex < work.length; ++rawIndex) {
                 var raw = work[rawIndex]
                 var info = cardutils.info(raw)
                 if (kingPos >= 0) {
@@ -124,7 +124,7 @@ mode.spiderRemoveSets = function () {
 }
 
 mode.spiderDeal = function () {
-    for (let workIndex = 0; workIndex < this.state.work.length; workIndex++) {
+    for (let workIndex = 0; workIndex < this.state.work.length; ++workIndex) {
         var work = this.state.work[workIndex]
         if (this.state.draw.cards.length == 0) {
             break

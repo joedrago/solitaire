@@ -56,7 +56,7 @@ mode.newGame = function () {
         faceDownCount = 2
         faceUpCount = 5
     }
-    for (let columnIndex = 0; columnIndex < 7; columnIndex++) {
+    for (let columnIndex = 0; columnIndex < 7; ++columnIndex) {
         var i
         var col = []
         if (columnIndex < 4) {
@@ -67,7 +67,7 @@ mode.newGame = function () {
                 col.push(deck.shift())
             }
         } else {
-            for (i = 0; i < 7; i++) {
+            for (i = 0; i < 7; ++i) {
                 col.push(deck.shift())
             }
         }
@@ -78,7 +78,7 @@ mode.newGame = function () {
 }
 
 mode.scorpionDeal = function () {
-    for (let workIndex = 0; workIndex < this.state.work.length; workIndex++) {
+    for (let workIndex = 0; workIndex < this.state.work.length; ++workIndex) {
         var work = this.state.work[workIndex]
         if (this.state.draw.cards.length == 0) {
             break
@@ -150,7 +150,7 @@ mode.won = function () {
     }
 
     // each work must either be empty or have a perfect 13 card run of same-suit in it
-    for (let workIndex = 0; workIndex < this.state.work.length; workIndex++) {
+    for (let workIndex = 0; workIndex < this.state.work.length; ++workIndex) {
         var work = this.state.work[workIndex]
         if (work.length == 0) {
             continue
@@ -159,7 +159,7 @@ mode.won = function () {
             // console.log "column #{workIndex} isnt 13 cards"
             return false
         }
-        for (var cIndex = 0; cIndex < work.length; cIndex++) {
+        for (var cIndex = 0; cIndex < work.length; ++cIndex) {
             var c = work[cIndex]
             var info = cardutils.info(c)
             if (info.flip) {

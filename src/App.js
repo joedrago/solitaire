@@ -372,7 +372,7 @@ class App extends Component {
 
         const helpDialogTextSplits = this.game.modes[this.game.mode].help.split(/\n\n/)
         const helpTypographies = []
-        for (let textIndex = 0; textIndex < helpDialogTextSplits.length; textIndex++) {
+        for (let textIndex = 0; textIndex < helpDialogTextSplits.length; ++textIndex) {
             let matches
             let text = helpDialogTextSplits[textIndex]
             let variant = "body1"

@@ -47,12 +47,12 @@ mode.newGame = function () {
 
     const deck = cardutils.shuffle(cardutils.range(0, 52))
     this.state.work.push([deck.shift()])
-    for (let columnIndex = 1; columnIndex < 7; columnIndex++) {
+    for (let columnIndex = 1; columnIndex < 7; ++columnIndex) {
         var col = []
         for (let i = 0; i < columnIndex; ++i) {
             col.push(deck.shift() | cardutils.FLIP_FLAG)
         }
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 5; ++i) {
             col.push(deck.shift())
         }
         this.state.work.push(col)

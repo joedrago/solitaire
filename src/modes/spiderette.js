@@ -50,7 +50,7 @@ mode.newGame = function () {
 
     const deck = cardutils.shuffle(cardutils.range(0, 52))
     const faceDownCount = this.hard ? 3 : 2
-    for (let columnIndex = 0; columnIndex < 7; columnIndex++) {
+    for (let columnIndex = 0; columnIndex < 7; ++columnIndex) {
         var col = []
         for (var i = 0; i < faceDownCount; ++i) {
             col.push(deck.shift() | cardutils.FLIP_FLAG)
@@ -68,7 +68,7 @@ mode.newGame = function () {
 mode.spideretteRemoveSets = function () {
     while (true) {
         var foundOne = false
-        for (var workIndex = 0; workIndex < this.state.work.length; workIndex++) {
+        for (var workIndex = 0; workIndex < this.state.work.length; ++workIndex) {
             var work = this.state.work[workIndex]
             if (work.length < 13) {
                 // optimization: this can't have a full set in it
@@ -76,7 +76,7 @@ mode.spideretteRemoveSets = function () {
             }
 
             var kingPos = -1
-            for (var rawIndex = 0; rawIndex < work.length; rawIndex++) {
+            for (var rawIndex = 0; rawIndex < work.length; ++rawIndex) {
                 var raw = work[rawIndex]
                 var info = cardutils.info(raw)
                 if (kingPos >= 0) {
@@ -112,7 +112,7 @@ mode.spideretteRemoveSets = function () {
 }
 
 mode.spideretteDeal = function () {
-    for (let workIndex = 0; workIndex < this.state.work.length; workIndex++) {
+    for (let workIndex = 0; workIndex < this.state.work.length; ++workIndex) {
         var work = this.state.work[workIndex]
         if (this.state.draw.cards.length == 0) {
             break
