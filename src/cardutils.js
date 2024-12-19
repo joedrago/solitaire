@@ -160,4 +160,15 @@ export const qs = (name) => {
     return decodeURIComponent(results[2].replace(/\+/g, " "))
 }
 
+export const range = (left, right) => {
+    const inclusive = false // TODO: remove
+    let range = []
+    let ascending = left < right
+    let end = !inclusive ? right : ascending ? right + 1 : right - 1
+    for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) {
+        range.push(i)
+    }
+    return range
+}
+
 export { calcInfo as info }
