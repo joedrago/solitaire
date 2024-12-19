@@ -17,13 +17,6 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.coffee$/,
-                loader: "coffee-loader",
-                options: {
-                    sourceMap: true
-                }
-            },
-            {
                 test: /\.(png|svg|webmanifest)/,
                 type: "asset/resource",
                 generator: {
@@ -33,7 +26,7 @@ module.exports = {
         ]
     },
     resolve: {
-        extensions: [".coffee", ".js"]
+        extensions: [".js"]
     },
     entry: "./src/boot.js",
     output: {
