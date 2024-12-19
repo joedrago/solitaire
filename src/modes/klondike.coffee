@@ -42,7 +42,7 @@ mode =
       foundations: [cardutils.GUIDE, cardutils.GUIDE, cardutils.GUIDE, cardutils.GUIDE]
       work: []
 
-    deck = cardutils.shuffle([0...52])
+    deck = cardutils.shuffle(cardutils.range(0, 52))
     for columnIndex in [0...7]
       col = []
       for i in [0...columnIndex]
@@ -51,6 +51,7 @@ mode =
       @state.work.push col
 
     @state.draw.cards = deck
+    return
 
   click: (type, outerIndex, innerIndex, isRightClick, isMouseUp) ->
     if isRightClick
@@ -156,6 +157,8 @@ mode =
       else
         # Probably a background click, just forget the selection
         @select('none')
+
+    return
 
   won: ->
     return (@state.draw.cards.length == 0) and (@state.pile.cards.length == 0) and @workPileEmpty()
