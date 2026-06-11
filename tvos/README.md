@@ -55,8 +55,10 @@ make list
 - Card art is the same Vector Playing Cards 3.2 deck as the web `basic` deck
   (`src/deck_basic/`), pre-rendered to 1024px PNGs in
   `Sources/Assets.xcassets`. The card back was rendered with qlmanage because
-  its SVG uses pattern fills that ImageMagick drops; everything else was
-  rendered with ImageMagick.
+  its SVG uses pattern fills that ImageMagick drops; J♠, Q♣, K♣, and J♥
+  (cards 10, 24, 25, 49) were rendered with headless Chrome because
+  ImageMagick mangles their face art; everything else was rendered with
+  ImageMagick.
 - The layered app icon (parallax: felt → fanned card backs → ace of spades)
   and the top-shelf images are composited from those same card renders.
 - Directional input listens for UIPress arrow events, i.e. the clickpad
