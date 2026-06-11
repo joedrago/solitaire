@@ -26,6 +26,9 @@ struct CardPlacement: Identifiable {
     let rect: CGRect
     let selected: SelectedState
     let zIndex: Double
+    // The clickable spot this card occupies, if any. Lets the cursor attach to
+    // its target card in the render loop so overlapping cards occlude it.
+    let spot: Spot?
 }
 
 // Layout port of SolitaireView.render(): positions are computed in units of
@@ -48,7 +51,7 @@ struct BoardGeometry {
         spot: Spot? = nil, selected: SelectedState = .none, z: Double = 0
     ) {
         let rect = CGRect(x: x, y: y, width: unit * Self.cardWidth / Self.cardHeight, height: unit)
-        placements.append(CardPlacement(id: key, raw: raw, rect: rect, selected: selected, zIndex: z))
+        placements.append(CardPlacement(id: key, raw: raw, rect: rect, selected: selected, zIndex: z, spot: spot))
         if let spot {
             spotRects[spot] = rect
         }

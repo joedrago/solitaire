@@ -1,5 +1,36 @@
 import SwiftUI
 
+// Display brightness preference. Off is the original look; Dim and Inverted
+// both darken the felt/cursor/text and differ only in how the cards are tinted.
+enum DarkMode: Int {
+    case off = 0
+    case dim = 1
+    case inverted = 2
+
+    var label: String {
+        switch self {
+        case .off: return "Off"
+        case .dim: return "Dim"
+        case .inverted: return "Inverted"
+        }
+    }
+
+    var next: DarkMode {
+        DarkMode(rawValue: (rawValue + 1) % 3) ?? .off
+    }
+
+    // Whether the dark surfaces (felt, cursor, text) are in effect.
+    var isDark: Bool { self != .off }
+
+    var cardTreatment: CardTreatment {
+        switch self {
+        case .off: return .identity
+        case .dim: return .dim
+        case .inverted: return .inverted
+        }
+    }
+}
+
 @MainActor
 final class AppModel: ObservableObject {
     let game = SolitaireGame()
@@ -11,6 +42,13 @@ final class AppModel: ObservableObject {
     @Published var cursor: Cursor = .top(0)
     @Published var overlay: Overlay = .none
     @Published var menuIndex = 0
+
+    // Pure display preference (separate from the game save): dims the felt,
+    // card faces, and cursor for play in a dark room. Tri-state, cycled from
+    // the menu.
+    @Published var darkMode: DarkMode = DarkMode(rawValue: UserDefaults.standard.integer(forKey: "darkMode")) ?? .off {
+        didSet { UserDefaults.standard.set(darkMode.rawValue, forKey: "darkMode") }
+    }
 
     enum Overlay: Equatable {
         case none
@@ -90,33 +128,40 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private func moveCursor(_ dir: Direction) {
+    private func moveCursor(_ dir: Direction, isRepeat: Bool) {
         let nav = NavModel.build(game)
         clampCursor(nav)
         let x = cursorX(nav)
+        // Wrap around an edge only on a deliberate press; a held repeat pulse
+        // stops dead at the edge so auto-repeat never runs off the end.
+        let wrap = !isRepeat
 
         switch dir {
         case .left, .right:
             let delta = dir == .right ? 1 : -1
             switch cursor {
             case .top(let i):
-                cursor = .top(min(max(i + delta, 0), nav.top.count - 1))
+                cursor = .top(Self.step(i, delta, nav.top.count, wrap: wrap))
             case .work(let col, _):
-                let c = min(max(col + delta, 0), nav.workStops.count - 1)
+                let c = Self.step(col, delta, nav.workStops.count, wrap: wrap)
                 cursor = .work(col: c, stopIdx: nav.workStops[c].count - 1)
             case .bottom(let i):
-                cursor = .bottom(min(max(i + delta, 0), nav.bottom.count - 1))
+                cursor = .bottom(Self.step(i, delta, nav.bottom.count, wrap: wrap))
             }
 
         case .up:
             switch cursor {
             case .top:
-                break
+                // Top of the vertical cycle: a press wraps to the bottom-most row.
+                if wrap { wrapToBottomEnd(nav, x: x) }
             case .work(let col, let stopIdx):
                 if stopIdx > 0 {
                     cursor = .work(col: col, stopIdx: stopIdx - 1)
                 } else if let i = nav.nearestIndex(in: nav.top, toX: x) {
                     cursor = .top(i)
+                } else if wrap {
+                    // No top row above this column; wrap to the bottom end.
+                    wrapToBottomEnd(nav, x: x)
                 }
             case .bottom:
                 let c = nav.nearestWorkColumn(toX: x)
@@ -135,20 +180,56 @@ final class AppModel: ObservableObject {
                     cursor = .work(col: col, stopIdx: stopIdx + 1)
                 } else if let i = nav.nearestIndex(in: nav.bottom, toX: x) {
                     cursor = .bottom(i)
+                } else if wrap {
+                    // No bottom row below this column; wrap to the top end.
+                    wrapToTopEnd(nav, x: x)
                 }
             case .bottom:
-                break
+                // Bottom of the vertical cycle: a press wraps to the top-most row.
+                if wrap { wrapToTopEnd(nav, x: x) }
             }
+        }
+    }
+
+    // Index step with optional edge wrap. With wrap off, the index clamps at
+    // the ends instead of cycling.
+    private static func step(_ i: Int, _ delta: Int, _ count: Int, wrap: Bool) -> Int {
+        guard count > 0 else { return 0 }
+        let n = i + delta
+        if n < 0 { return wrap ? count - 1 : 0 }
+        if n >= count { return wrap ? 0 : count - 1 }
+        return n
+    }
+
+    // Jump to the bottom-most vertical position nearest x: the bottom row if
+    // there is one, otherwise the deepest stop of the nearest work column.
+    private func wrapToBottomEnd(_ nav: NavModel, x: Double) {
+        if let i = nav.nearestIndex(in: nav.bottom, toX: x) {
+            cursor = .bottom(i)
+        } else {
+            let c = nav.nearestWorkColumn(toX: x)
+            cursor = .work(col: c, stopIdx: nav.workStops[c].count - 1)
+        }
+    }
+
+    // Jump to the top-most vertical position nearest x: the top row if there
+    // is one, otherwise the first stop of the nearest work column.
+    private func wrapToTopEnd(_ nav: NavModel, x: Double) {
+        if let i = nav.nearestIndex(in: nav.top, toX: x) {
+            cursor = .top(i)
+        } else {
+            let c = nav.nearestWorkColumn(toX: x)
+            cursor = .work(col: c, stopIdx: 0)
         }
     }
 
     // -----------------------------------------------------------------------------------------------
     // Remote input entry points
 
-    func onDirection(_ dir: Direction) {
+    func onDirection(_ dir: Direction, isRepeat: Bool) {
         switch overlay {
         case .none:
-            moveCursor(dir)
+            moveCursor(dir, isRepeat: isRepeat)
         case .menu:
             let items = menuItems()
             if dir == .up {
@@ -198,16 +279,10 @@ final class AppModel: ObservableObject {
         refresh()
     }
 
-    // Whether a menu/back press should be captured (returning false lets the
-    // system suspend the app, as the HIG requires at the top level).
+    // Back is always handled in-app — stop autowin, close an overlay, clear a
+    // selection, or open the menu. The Home button still suspends to tvOS.
     func menuWantsCapture() -> Bool {
-        if autowinTimer != nil {
-            return true
-        }
-        if overlay != .none {
-            return true
-        }
-        return game.state.selection.type != .none
+        return true
     }
 
     func onMenu() {
@@ -218,8 +293,14 @@ final class AppModel: ObservableObject {
         }
         switch overlay {
         case .none:
-            // Clear the selection, like a background click
-            game.click(.background)
+            if game.state.selection.type != .none {
+                // Clear the selection, like a background click.
+                game.click(.background)
+            } else {
+                // Nothing selected: open the menu.
+                menuIndex = 0
+                overlay = .menu
+            }
             refresh()
         case .menu, .help, .win, .lose:
             overlay = .none
@@ -283,7 +364,8 @@ final class AppModel: ObservableObject {
         items.append(MenuEntry(id: "undo", label: "Undo", enabled: game.canUndo) { [weak self] in
             guard let self else { return }
             self.game.undo()
-            self.overlay = .none
+            // Stay in the menu so the player can keep undoing (like Dark Mode,
+            // this is a repeatable in-menu action).
             self.afterAction()
         })
 
@@ -303,6 +385,12 @@ final class AppModel: ObservableObject {
             guard let self else { return }
             self.game.hard.toggle()
             self.game.save()
+            self.refresh()
+        })
+
+        items.append(MenuEntry(id: "dark", label: "Dark Mode: \(darkMode.label)", enabled: true) { [weak self] in
+            guard let self else { return }
+            self.darkMode = self.darkMode.next
             self.refresh()
         })
 

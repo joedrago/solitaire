@@ -3,39 +3,64 @@ import SwiftUI
 struct BoardView: View {
     @ObservedObject var model: AppModel
 
-    static let tableColor = Color(red: 0x33 / 255.0, green: 0x66 / 255.0, blue: 0x33 / 255.0)
     static let selectionColor = Color(red: 0.5, green: 0.5, blue: 1.0)
     static let foundationOnlyColor = Color.yellow
-    static let cursorColor = Color.white
+
+    // Theme. Dark mode dims the large bright surfaces (felt, white card faces,
+    // cursor) without touching any assets — just color math.
+    private var dark: Bool { model.darkMode.isDark }
+
+    private var tableColor: Color {
+        dark
+            ? Color(red: 0x0b / 255.0, green: 0x14 / 255.0, blue: 0x0d / 255.0)
+            : Color(red: 0x33 / 255.0, green: 0x66 / 255.0, blue: 0x33 / 255.0)
+    }
+
+    private var cursorColor: Color {
+        // Warm amber at night reads as "night mode" and is far gentler than white.
+        dark ? Color(red: 0.86, green: 0.68, blue: 0.38) : Color.white
+    }
+
+    // Color treatment for every card image, per the current dark-mode setting.
+    private var cardTreatment: CardTreatment {
+        model.darkMode.cardTreatment
+    }
+
+    // The resting color of the bottom-right game label: a muted gray that
+    // recedes until Auto-Finish lights it up.
+    private var labelColor: Color {
+        dark ? Color(white: 0.45) : Color(white: 0.55)
+    }
 
     var body: some View {
         GeometryReader { geo in
             let state = model.game.state!
             let board = BoardGeometry.compute(state: state, size: geo.size)
-            let cursorRect = cursorRect(board)
+            let cursorSpot = cursorTargetSpot(board)
 
             ZStack(alignment: .topLeading) {
                 ForEach(board.placements) { p in
-                    CardImage(placement: p)
-                }
-
-                if let cursorRect {
-                    RoundedRectangle(cornerRadius: cursorRect.height * 0.07)
-                        .stroke(Self.cursorColor, lineWidth: 5)
-                        .shadow(color: .black.opacity(0.8), radius: 6)
-                        .frame(width: cursorRect.width + 10, height: cursorRect.height + 10)
-                        .position(x: cursorRect.midX, y: cursorRect.midY)
-                        .zIndex(100)
+                    // Drawing the cursor as part of its target card (rather than
+                    // a top-level overlay) lets overlapping cards occlude it, so
+                    // the outline hugs the visible portion of a buried card.
+                    CardImage(
+                        placement: p,
+                        treatment: cardTreatment,
+                        cursor: cursorSpot != nil && p.spot == cursorSpot,
+                        cursorColor: cursorColor
+                    )
                 }
 
                 texts(state: state, board: board, screen: geo.size)
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
-        .background(Self.tableColor.ignoresSafeArea())
+        .background(tableColor.ignoresSafeArea())
     }
 
-    private func cursorRect(_ board: BoardGeometry) -> CGRect? {
+    // The spot the cursor should highlight, guaranteed to have a placement so
+    // it can be matched in the render loop. Nil while an overlay is up.
+    private func cursorTargetSpot(_ board: BoardGeometry) -> Spot? {
         guard model.overlay == .none else {
             return nil
         }
@@ -43,13 +68,14 @@ struct BoardView: View {
         guard let spot = model.cursorSpot(nav) else {
             return nil
         }
-        if let rect = board.spotRects[spot] {
-            return rect
+        if board.spotRects[spot] != nil {
+            return spot
         }
         // A work spot whose card doesn't exist anymore (or an empty column's
-        // guide); fall back to the column guide rect.
+        // guide); fall back to the column guide.
         if spot.type == .work {
-            return board.spotRects[Spot(.work, spot.outer, -1)]
+            let guide = Spot(.work, spot.outer, -1)
+            return board.spotRects[guide] != nil ? guide : nil
         }
         return nil
     }
@@ -78,10 +104,13 @@ struct BoardView: View {
             }
         }
 
+        // The game name doubles as an affordance hint: muted gray normally, but
+        // bold bright yellow when Auto-Finish is available in the menu.
         let gameLabel = "\(model.game.mode.name)\(state.hard ? " (Hard)" : "")"
+        let canAutoFinish = model.game.canAutoWin()
         Text(gameLabel)
-            .font(.system(size: 26, design: .monospaced))
-            .foregroundColor(.white)
+            .font(.system(size: 26, weight: canAutoFinish ? .bold : .regular, design: .monospaced))
+            .foregroundColor(canAutoFinish ? Color.yellow : labelColor)
             .shadow(color: .black, radius: 0, x: 2, y: 2)
             .position(x: screen.width - CGFloat(gameLabel.count) * 8 - 30, y: screen.height - 30)
     }
@@ -117,15 +146,32 @@ struct BoardView: View {
 
 struct CardImage: View {
     let placement: CardPlacement
+    var treatment: CardTreatment = .identity
+    var cursor: Bool = false
+    var cursorColor: Color = .white
 
     var body: some View {
         let p = placement
         Image(imageName(p.raw))
             .resizable()
             .frame(width: p.rect.width, height: p.rect.height)
+            .modifier(CardFX(t: treatment))
             .overlay(selectionBorder)
+            .overlay(cursorBorder)
             .position(x: p.rect.midX, y: p.rect.midY)
             .zIndex(p.zIndex)
+    }
+
+    @ViewBuilder
+    private var cursorBorder: some View {
+        if cursor {
+            // Slightly larger than the card; not clipped, so it frames the card.
+            // Drawn after CardFX so the dark-mode tint never recolors it.
+            RoundedRectangle(cornerRadius: placement.rect.height * 0.07)
+                .stroke(cursorColor, lineWidth: 5)
+                .shadow(color: .black.opacity(0.8), radius: 6)
+                .frame(width: placement.rect.width + 10, height: placement.rect.height + 10)
+        }
     }
 
     @ViewBuilder

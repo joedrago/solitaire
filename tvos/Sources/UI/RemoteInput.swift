@@ -20,7 +20,7 @@ struct RemoteInput: UIViewControllerRepresentable {
     }
 
     private func update(_ vc: RemotePressCaptureVC) {
-        vc.onDirection = { [weak model] dir in model?.onDirection(dir) }
+        vc.onDirection = { [weak model] dir, isRepeat in model?.onDirection(dir, isRepeat: isRepeat) }
         vc.onSelectTap = { [weak model] in model?.onSelect() }
         vc.onSelectLongPress = { [weak model] in model?.onSelectLong() }
         vc.onPlayPauseTap = { [weak model] in model?.onPlayPause() }
@@ -31,7 +31,7 @@ struct RemoteInput: UIViewControllerRepresentable {
 }
 
 final class RemotePressCaptureVC: UIViewController {
-    var onDirection: (Direction) -> Void = { _ in }
+    var onDirection: (Direction, Bool) -> Void = { _, _ in }
     var onSelectTap: () -> Void = {}
     var onSelectLongPress: () -> Void = {}
     var onPlayPauseTap: () -> Void = {}
@@ -76,15 +76,17 @@ final class RemotePressCaptureVC: UIViewController {
     }
 
     private func beginDirection(_ dir: Direction) {
-        onDirection(dir)
+        onDirection(dir, false)
         heldDirection = dir
         repeatTimer?.invalidate()
-        // Hold-to-repeat: handy for walking 13 columns of Baker's Dozen
+        // Hold-to-repeat: handy for walking 13 columns of Baker's Dozen.
+        // Repeat ticks pass isRepeat=true so edge-wrapping only fires on a
+        // real press, never while a held direction is auto-pulsing.
         repeatTimer = Timer.scheduledTimer(withTimeInterval: 0.45, repeats: false) { [weak self] _ in
             guard let self else { return }
             self.repeatTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { [weak self] _ in
                 guard let self, let held = self.heldDirection else { return }
-                self.onDirection(held)
+                self.onDirection(held, true)
             }
         }
     }
