@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "card50.png",
+      "idiom" : "tv",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

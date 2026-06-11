@@ -1,0 +1,251 @@
+import SwiftUI
+
+// A clickable location on the table, mirroring the (type, outerIndex,
+// innerIndex) triples the JS game passes to game.click().
+struct Spot: Hashable {
+    let type: SpotType
+    let outer: Int
+    let inner: Int
+
+    init(_ type: SpotType, _ outer: Int = 0, _ inner: Int = 0) {
+        self.type = type
+        self.outer = outer
+        self.inner = inner
+    }
+}
+
+enum SelectedState {
+    case none
+    case selected
+    case foundationOnly
+}
+
+struct CardPlacement: Identifiable {
+    let id: String
+    let raw: Int
+    let rect: CGRect
+    let selected: SelectedState
+    let zIndex: Double
+}
+
+// Layout port of SolitaireView.render(): positions are computed in units of
+// one card height, then scaled to fit the screen.
+struct BoardGeometry {
+    static let cardWidth: CGFloat = 119
+    static let cardHeight: CGFloat = 162
+    static let pileCardOverlap: CGFloat = 0.105
+    static let workCardOverlap: CGFloat = 0.25
+    static let centerCardMargin: CGFloat = (0.5 * (cardHeight - cardWidth)) / cardHeight
+    static let minimumScaleInCardHeights: CGFloat = 12
+
+    var placements: [CardPlacement] = []
+    var spotRects: [Spot: CGRect] = [:]
+    var unit: CGFloat = 100 // one card height, in pixels
+    var size: CGSize = .zero
+
+    private mutating func place(
+        _ key: String, _ raw: Int, _ x: CGFloat, _ y: CGFloat,
+        spot: Spot? = nil, selected: SelectedState = .none, z: Double = 0
+    ) {
+        let rect = CGRect(x: x, y: y, width: unit * Self.cardWidth / Self.cardHeight, height: unit)
+        placements.append(CardPlacement(id: key, raw: raw, rect: rect, selected: selected, zIndex: z))
+        if let spot {
+            spotRects[spot] = rect
+        }
+    }
+
+    static func compute(state: GameState, size: CGSize) -> BoardGeometry {
+        var b = BoardGeometry()
+        b.size = size
+
+        // Calculate necessary table extents, pretending a card is 1.0 units tall
+        var largestWork = minimumScaleInCardHeights
+        for w in state.work where largestWork < CGFloat(w.count) {
+            largestWork = CGFloat(w.count)
+        }
+
+        let foundationOffsetL = CGFloat(state.work.count - state.foundations.count)
+        let topWidth = CGFloat(state.foundations.count) + foundationOffsetL
+        let workWidth = CGFloat(state.work.count)
+
+        var workTop: CGFloat = 0
+        if state.draw.pos == "top" || !state.foundations.isEmpty {
+            workTop = 1.25
+        }
+        var workBottom = workTop + 1 + (largestWork - 1) * workCardOverlap
+        if workBottom < 4.1 && (state.draw.pos == "middle" || state.reserve?.pos == "middle") {
+            // Leave room for draw/reserve at the bottom of the screen
+            workBottom = 4.1
+        }
+
+        let maxWidth = max(topWidth, workWidth)
+        let maxHeight = workBottom
+        let maxAspectRatio = maxWidth / maxHeight
+        let boardAspectRatio = size.width / size.height
+
+        let maxWidthPixels = maxWidth * cardHeight
+        let maxHeightPixels = maxHeight * cardHeight
+
+        var renderScale: CGFloat
+        var renderOffsetL: CGFloat
+        if maxAspectRatio < boardAspectRatio {
+            // use height for scaling
+            renderScale = size.height / maxHeightPixels
+            renderOffsetL = (size.width - maxWidthPixels * renderScale) / 2
+        } else {
+            // use width for scaling
+            renderScale = size.width / maxWidthPixels
+            renderOffsetL = 0
+        }
+        let unit = renderScale * cardHeight
+        b.unit = unit
+        let renderOffsetT = unit * 0.1
+
+        if state.draw.pos == "top" || state.draw.pos == "middle" {
+            var drawOffsetL: CGFloat
+            var drawOffsetT: CGFloat
+            if state.draw.pos == "top" {
+                drawOffsetL = 0
+                drawOffsetT = 0
+            } else if state.reserve?.pos == "middle" {
+                drawOffsetL = 1 * unit
+                drawOffsetT = 3 * unit
+            } else {
+                drawOffsetL = (maxWidth / 2 - 1) * unit
+                drawOffsetT = 2.3 * unit
+            }
+
+            // Draw Pile
+            var drawCard = CardUtils.BACK
+            if state.draw.cards.isEmpty {
+                drawCard = CardUtils.READY
+                if state.draw.redeals == 0 {
+                    drawCard = CardUtils.DEAD
+                }
+            }
+            b.place(
+                "draw", drawCard,
+                drawOffsetL + renderOffsetL + unit * centerCardMargin,
+                drawOffsetT + renderOffsetT,
+                spot: Spot(.draw)
+            )
+
+            // Waste pile: an under-card (or guide), then the visible fan
+            var pileRenderCount = state.pile.cards.count
+            if pileRenderCount > state.pile.show {
+                pileRenderCount = state.pile.show
+            }
+            let startPileIndex = state.pile.cards.count - pileRenderCount
+
+            let pileBaseX = drawOffsetL + renderOffsetL + (1 + centerCardMargin) * unit
+            if startPileIndex > 0 {
+                b.place("pileundercard", state.pile.cards[startPileIndex - 1], pileBaseX, drawOffsetT + renderOffsetT)
+            } else {
+                b.place("pileguide", CardUtils.GUIDE, pileBaseX, drawOffsetT + renderOffsetT, spot: Spot(.pile))
+            }
+
+            for pileIndex in startPileIndex..<state.pile.cards.count {
+                let isTop = pileIndex == state.pile.cards.count - 1
+                let isSelected = state.selection.type == .pile && isTop
+                b.place(
+                    "pile\(pileIndex)", state.pile.cards[pileIndex],
+                    pileBaseX + CGFloat(pileIndex - startPileIndex) * pileCardOverlap * unit,
+                    drawOffsetT + renderOffsetT,
+                    spot: isTop ? Spot(.pile) : nil,
+                    selected: isSelected ? .selected : .none
+                )
+            }
+        }
+
+        // Work columns
+        var currentL = renderOffsetL + centerCardMargin * unit
+        for (workColumnIndex, workColumn) in state.work.enumerated() {
+            b.place(
+                "workguide\(workColumnIndex)", CardUtils.GUIDE,
+                currentL, workTop * unit,
+                spot: Spot(.work, workColumnIndex, -1)
+            )
+            for (workIndex, work) in workColumn.enumerated() {
+                var selected = SelectedState.none
+                if state.selection.type == .work && workColumnIndex == state.selection.outerIndex
+                    && workIndex >= state.selection.innerIndex
+                {
+                    selected = state.selection.foundationOnly == true ? .foundationOnly : .selected
+                }
+                b.place(
+                    "work\(workColumnIndex)_\(workIndex)", work,
+                    currentL, (workTop + CGFloat(workIndex) * workCardOverlap) * unit,
+                    spot: Spot(.work, workColumnIndex, workIndex),
+                    selected: selected,
+                    z: selected != .none ? 5 : 0
+                )
+            }
+            currentL += unit
+        }
+
+        // Foundations
+        currentL = renderOffsetL + (foundationOffsetL + centerCardMargin) * unit
+        for (foundationIndex, foundation) in state.foundations.enumerated() {
+            b.place(
+                "foundguide\(foundationIndex)", CardUtils.GUIDE,
+                currentL, renderOffsetT,
+                spot: Spot(.foundation, foundationIndex)
+            )
+            if foundation != CardUtils.GUIDE {
+                b.place(
+                    "found\(foundationIndex)", foundation,
+                    currentL, renderOffsetT,
+                    spot: Spot(.foundation, foundationIndex)
+                )
+            }
+            currentL += unit
+        }
+
+        if state.draw.pos == "bottom" {
+            // Bottom Left Draw Pile
+            let drawCard = state.draw.cards.isEmpty ? CardUtils.GUIDE : CardUtils.BACK
+            b.place(
+                "draw", drawCard,
+                renderOffsetL, size.height - 0.35 * unit,
+                spot: Spot(.draw)
+            )
+        }
+
+        if let reserve = state.reserve {
+            var drawOffsetL: CGFloat
+            var drawOffsetT: CGFloat
+            if reserve.pos == "middle" {
+                drawOffsetL = (maxWidth / 2 - 0.5) * unit
+                drawOffsetT = 3 * unit
+            } else {
+                drawOffsetL = 0
+                drawOffsetT = 0
+            }
+
+            for (colIndex, col) in reserve.cols.enumerated() {
+                var underCard = CardUtils.RESERVE
+                if col.count > 1 {
+                    underCard = col[col.count - 2]
+                }
+                let x = drawOffsetL + renderOffsetL + unit * (CGFloat(colIndex) + centerCardMargin)
+                b.place(
+                    "reserveguide\(colIndex)", underCard,
+                    x, drawOffsetT + renderOffsetT,
+                    spot: Spot(.reserve, colIndex)
+                )
+
+                if let top = col.last {
+                    let isSelected = state.selection.type == .reserve && colIndex == state.selection.outerIndex
+                    b.place(
+                        "reserve\(colIndex)", top,
+                        x, drawOffsetT + renderOffsetT,
+                        spot: Spot(.reserve, colIndex),
+                        selected: isSelected ? .selected : .none
+                    )
+                }
+            }
+        }
+
+        return b
+    }
+}
