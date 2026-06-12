@@ -46,6 +46,7 @@ struct BoardView: View {
                     CardImage(
                         placement: p,
                         treatment: cardTreatment,
+                        backImage: model.deckColor.imageName,
                         cursor: cursorSpot != nil && p.spot == cursorSpot,
                         cursorColor: cursorColor
                     )
@@ -55,6 +56,9 @@ struct BoardView: View {
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
+        // Inset the board slightly from the screen edges (well inside the safe
+        // area) while the felt itself still bleeds to the physical edges.
+        .padding(20)
         .background(tableColor.ignoresSafeArea())
     }
 
@@ -147,12 +151,14 @@ struct BoardView: View {
 struct CardImage: View {
     let placement: CardPlacement
     var treatment: CardTreatment = .identity
+    var backImage: String = "cardBack"
     var cursor: Bool = false
     var cursorColor: Color = .white
 
     var body: some View {
         let p = placement
-        Image(imageName(p.raw))
+        let name = imageName(p.raw)
+        Image(name == "cardBack" ? backImage : name)
             .resizable()
             .frame(width: p.rect.width, height: p.rect.height)
             .modifier(CardFX(t: treatment))

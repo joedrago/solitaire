@@ -1,18 +1,20 @@
 import SwiftUI
 
-// The menu the web build keeps in its drawer: undo, help, hard mode,
-// play again, and one New Game entry per mode. Opened with play/pause.
+// The menu the web build keeps in its drawer: game actions on the main page
+// (with display options at the bottom), and a Choose Game page listing the
+// modes. Opened with play/pause.
 struct MenuOverlay: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
         let items = model.menuItems()
+        let chooseGame = model.menuPage == .chooseGame
 
         ZStack {
             Color.black.opacity(0.72).ignoresSafeArea()
 
             VStack(spacing: 6) {
-                Text("Solitaire")
+                Text(chooseGame ? "Choose Game" : "Solitaire")
                     .font(.system(size: 44, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.bottom, 18)
@@ -30,7 +32,7 @@ struct MenuOverlay: View {
                         )
                 }
 
-                Text("OK selects · Play/Pause or Back closes")
+                Text(chooseGame ? "OK starts a new game · Back returns" : "OK selects · Play/Pause or Back closes")
                     .font(.system(size: 21))
                     .foregroundColor(.gray)
                     .padding(.top, 18)

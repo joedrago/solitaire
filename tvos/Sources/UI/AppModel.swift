@@ -1,17 +1,17 @@
 import SwiftUI
 
-// Display brightness preference. Off is the original look; Dim and Inverted
+// Display brightness preference. Off is the original look; Dim and Candlelight
 // both darken the felt/cursor/text and differ only in how the cards are tinted.
 enum DarkMode: Int {
     case off = 0
     case dim = 1
-    case inverted = 2
+    case candlelight = 2
 
     var label: String {
         switch self {
         case .off: return "Off"
         case .dim: return "Dim"
-        case .inverted: return "Inverted"
+        case .candlelight: return "Candlelight"
         }
     }
 
@@ -26,7 +26,41 @@ enum DarkMode: Int {
         switch self {
         case .off: return .identity
         case .dim: return .dim
-        case .inverted: return .inverted
+        case .candlelight: return .candlelight
+        }
+    }
+}
+
+// Card-back deck color. Each case selects a pre-colorized variant of the back
+// art (generated offline from the desaturated master, which Gray shows as-is).
+enum DeckColor: Int {
+    case green = 0
+    case red = 1
+    case blue = 2
+    case purple = 3
+    case gray = 4
+
+    var label: String {
+        switch self {
+        case .green: return "Green"
+        case .red: return "Red"
+        case .blue: return "Blue"
+        case .purple: return "Purple"
+        case .gray: return "Gray"
+        }
+    }
+
+    var next: DeckColor {
+        DeckColor(rawValue: (rawValue + 1) % 5) ?? .green
+    }
+
+    var imageName: String {
+        switch self {
+        case .green: return "cardBackGreen"
+        case .red: return "cardBackRed"
+        case .blue: return "cardBackBlue"
+        case .purple: return "cardBackPurple"
+        case .gray: return "cardBack"
         }
     }
 }
@@ -42,6 +76,7 @@ final class AppModel: ObservableObject {
     @Published var cursor: Cursor = .top(0)
     @Published var overlay: Overlay = .none
     @Published var menuIndex = 0
+    @Published var menuPage: MenuPage = .main
 
     // Pure display preference (separate from the game save): dims the felt,
     // card faces, and cursor for play in a dark room. Tri-state, cycled from
@@ -50,12 +85,24 @@ final class AppModel: ObservableObject {
         didSet { UserDefaults.standard.set(darkMode.rawValue, forKey: "darkMode") }
     }
 
+    // Deck color for the card backs, also display-only and menu-cycled.
+    @Published var deckColor: DeckColor = DeckColor(rawValue: UserDefaults.standard.integer(forKey: "deckColor")) ?? .green {
+        didSet { UserDefaults.standard.set(deckColor.rawValue, forKey: "deckColor") }
+    }
+
     enum Overlay: Equatable {
         case none
         case menu
         case help
         case win
         case lose
+    }
+
+    // Which page the menu overlay is showing: the main actions, or the
+    // Choose Game list of modes.
+    enum MenuPage: Equatable {
+        case main
+        case chooseGame
     }
 
     private var toastShown = false
@@ -277,6 +324,7 @@ final class AppModel: ObservableObject {
         case .menu:
             overlay = .none
         case .none, .help, .win, .lose:
+            menuPage = .main
             menuIndex = 0
             overlay = .menu
         }
@@ -302,11 +350,20 @@ final class AppModel: ObservableObject {
                 game.click(.background)
             } else {
                 // Nothing selected: open the menu.
+                menuPage = .main
                 menuIndex = 0
                 overlay = .menu
             }
             refresh()
-        case .menu, .help, .win, .lose:
+        case .menu:
+            if menuPage == .chooseGame {
+                // Step back to the main page, cursor on the Choose Game entry.
+                menuPage = .main
+                menuIndex = menuItems().firstIndex { $0.id == "choose" } ?? 0
+            } else {
+                overlay = .none
+            }
+        case .help, .win, .lose:
             overlay = .none
         }
     }
@@ -363,6 +420,14 @@ final class AppModel: ObservableObject {
     }
 
     func menuItems() -> [MenuEntry] {
+        switch menuPage {
+        case .main: return mainMenuItems()
+        case .chooseGame: return chooseGameItems()
+        }
+    }
+
+    // Game actions first, display options at the bottom.
+    private func mainMenuItems() -> [MenuEntry] {
         var items: [MenuEntry] = []
 
         items.append(MenuEntry(id: "undo", label: "Undo", enabled: game.canUndo) { [weak self] in
@@ -392,12 +457,6 @@ final class AppModel: ObservableObject {
             self.refresh()
         })
 
-        items.append(MenuEntry(id: "dark", label: "Dark Mode: \(darkMode.label)", enabled: true) { [weak self] in
-            guard let self else { return }
-            self.darkMode = self.darkMode.next
-            self.refresh()
-        })
-
         items.append(MenuEntry(id: "again", label: "Play Again: \(game.mode.name)", enabled: true) { [weak self] in
             guard let self else { return }
             self.overlay = .none
@@ -405,17 +464,39 @@ final class AppModel: ObservableObject {
             self.afterNewGame()
         })
 
-        for modeId in game.modeOrder {
-            guard let mode = game.modes[modeId] else { continue }
-            items.append(MenuEntry(id: "new_\(modeId)", label: "New Game: \(mode.name)", enabled: true) { [weak self] in
-                guard let self else { return }
-                self.overlay = .none
-                self.game.newGame(modeId)
-                self.afterNewGame()
-            })
-        }
+        items.append(MenuEntry(id: "choose", label: "Choose Game…", enabled: true) { [weak self] in
+            guard let self else { return }
+            self.menuPage = .chooseGame
+            // Land the cursor on the game currently being played.
+            self.menuIndex = self.game.modeOrder.firstIndex(of: self.game.modeId) ?? 0
+        })
+
+        items.append(MenuEntry(id: "dark", label: "Dark Mode: \(darkMode.label)", enabled: true) { [weak self] in
+            guard let self else { return }
+            self.darkMode = self.darkMode.next
+            self.refresh()
+        })
+
+        items.append(MenuEntry(id: "deck", label: "Deck Color: \(deckColor.label)", enabled: true) { [weak self] in
+            guard let self else { return }
+            self.deckColor = self.deckColor.next
+            self.refresh()
+        })
 
         return items
+    }
+
+    private func chooseGameItems() -> [MenuEntry] {
+        game.modeOrder.compactMap { modeId in
+            guard let mode = game.modes[modeId] else { return nil }
+            return MenuEntry(id: "new_\(modeId)", label: mode.name, enabled: true) { [weak self] in
+                guard let self else { return }
+                self.overlay = .none
+                self.menuPage = .main
+                self.game.newGame(modeId)
+                self.afterNewGame()
+            }
+        }
     }
 
     private func activateMenuItem() {

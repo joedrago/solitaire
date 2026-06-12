@@ -1,9 +1,9 @@
 import SwiftUI
 
 // A parametric color treatment applied to every card image. Lets dark mode
-// restyle the cards with pure color math (no new assets): invert flips the
-// white paper to black, and a hue rotation spins the inverted suits back to
-// sensible colors.
+// restyle the cards with pure color math (no new assets): a multiply darkens
+// (and can warm) the paper, while saturation/hue/invert allow more drastic
+// restylings if a mode ever wants them.
 struct CardTreatment {
     let invert: Bool
     let hue: Double // degrees of hue rotation, applied after invert
@@ -21,12 +21,12 @@ struct CardTreatment {
         invert: false, hue: 0, saturation: 1, brightness: 0, multiply: Color(white: 0.6)
     )
 
-    // Classic dark deck: black background, white black-suits, red stays red.
-    // 200° is where SwiftUI's matrix hueRotation lands the inverted suit on a
-    // true red (lower reads pink, higher tips orange); the same dim multiply
-    // keeps the bright pips off eye-searing.
-    static let inverted = CardTreatment(
-        invert: true, hue: 200, saturation: 1, brightness: 0, multiply: Color(white: 0.6)
+    // Candlelight: same paper-and-ink cards, lit warm and low. The blue cut
+    // does most of the perceived dimming (night glare is mostly blue), and
+    // the saturation boost keeps the red suits unambiguously red under it.
+    static let candlelight = CardTreatment(
+        invert: false, hue: 0, saturation: 1.15, brightness: 0,
+        multiply: Color(red: 0.45, green: 0.39, blue: 0.28)
     )
 }
 
