@@ -47,10 +47,27 @@ struct BoardGeometry {
     var unit: CGFloat = 100 // one card height, in pixels
     var size: CGSize = .zero
 
+    // Occurrence counters for real cards, so duplicate raws (two-deck modes
+    // like Spider) still get distinct, deterministic ids in layout order.
+    private var cardOccurrences: [Int: Int] = [:]
+
     private mutating func place(
         _ key: String, _ raw: Int, _ x: CGFloat, _ y: CGFloat,
         spot: Spot? = nil, selected: SelectedState = .none, z: Double = 0, opacity: Double = 1
     ) {
+        // Real cards get an identity that follows the card rather than the
+        // board slot, so SwiftUI animates a moved card from its old position
+        // to its new one instead of treating the move as remove+insert. The
+        // flip flag is masked off so a card keeps its identity when it turns
+        // face-up. Pseudo-cards (guides, the stock) keep their positional key.
+        var key = key
+        if raw >= 0 {
+            let card = raw & ~CardUtils.FLIP_FLAG
+            let n = cardOccurrences[card, default: 0]
+            cardOccurrences[card] = n + 1
+            key = "c\(card)_\(n)"
+        }
+
         let rect = CGRect(x: x, y: y, width: unit * Self.cardWidth / Self.cardHeight, height: unit)
         placements.append(CardPlacement(id: key, raw: raw, rect: rect, selected: selected, zIndex: z, spot: spot, opacity: opacity))
         if let spot {

@@ -55,6 +55,10 @@ struct BoardView: View {
                 texts(state: state, board: board, screen: geo.size)
             }
             .frame(width: geo.size.width, height: geo.size.height)
+            // Implicit move animation: placements are identified by card, so
+            // when a game mutation (version bump) relocates one, it eases to
+            // its new rect. Keyed to version so cursor movement stays instant.
+            .animation(.easeOut(duration: 0.18), value: model.version)
         }
         // Inset the board slightly from the screen edges (well inside the safe
         // area) while the felt itself still bleeds to the physical edges.
@@ -181,17 +185,21 @@ struct CardImage: View {
         }
     }
 
-    @ViewBuilder
+    // Always present, faded via opacity rather than inserted/removed: a view
+    // mid-removal is snapshotted out of layout and stops following its card,
+    // so a cleared selection would fade away at the card's old position
+    // instead of riding along with the move.
     private var selectionBorder: some View {
+        RoundedRectangle(cornerRadius: placement.rect.height * 0.06)
+            .stroke(selectionStrokeColor ?? BoardView.selectionColor, lineWidth: 4)
+            .opacity(selectionStrokeColor == nil ? 0 : 1)
+    }
+
+    private var selectionStrokeColor: Color? {
         switch placement.selected {
-        case .none:
-            EmptyView()
-        case .selected:
-            RoundedRectangle(cornerRadius: placement.rect.height * 0.06)
-                .stroke(BoardView.selectionColor, lineWidth: 4)
-        case .foundationOnly:
-            RoundedRectangle(cornerRadius: placement.rect.height * 0.06)
-                .stroke(BoardView.foundationOnlyColor, lineWidth: 4)
+        case .none: return nil
+        case .selected: return BoardView.selectionColor
+        case .foundationOnly: return BoardView.foundationOnlyColor
         }
     }
 

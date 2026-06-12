@@ -377,7 +377,18 @@ final class AppModel: ObservableObject {
         guard let spot = cursorSpot(nav) else {
             return
         }
+        let droppingOnWork = game.state.selection.type != .none && spot.type == .work
         game.click(spot.type, spot.outer, spot.inner, isRightClick: isRightClick)
+        // After dropping on a work column, land on its deepest stop (the tip
+        // of the dropped run). While a selection is held the column is a
+        // single drop-target stop, so the held stopIdx would otherwise be
+        // misread against the rebuilt full stop list and jump high up the pile.
+        if droppingOnWork, game.state.selection.type == .none {
+            let nav = NavModel.build(game)
+            if nav.workStops.indices.contains(spot.outer) {
+                cursor = .work(col: spot.outer, stopIdx: nav.workStops[spot.outer].count - 1)
+            }
+        }
         afterAction()
     }
 
