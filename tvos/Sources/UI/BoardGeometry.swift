@@ -205,12 +205,18 @@ struct BoardGeometry {
         }
 
         if state.draw.pos == "bottom" {
-            // Bottom Left Draw Pile
-            let drawCard = state.draw.cards.isEmpty ? CardUtils.GUIDE : CardUtils.BACK
+            // Stock tied under column 0. Anchored just below the reserved column
+            // area, so it's fully visible where there's bottom slack (Spider)
+            // and peeks up from the screen edge in the tight 7-wide layouts —
+            // no extra width is reserved, so the board never zooms out.
+            // When empty (no redeal in these modes) it's a non-targetable guide.
+            let isEmpty = state.draw.cards.isEmpty
+            let drawCard = isEmpty ? CardUtils.GUIDE : CardUtils.BACK
             b.place(
                 "draw", drawCard,
-                renderOffsetL, size.height - 0.35 * unit,
-                spot: Spot(.draw)
+                renderOffsetL + centerCardMargin * unit,
+                min(workBottom * unit, size.height - 0.4 * unit),
+                spot: isEmpty ? nil : Spot(.draw)
             )
         }
 

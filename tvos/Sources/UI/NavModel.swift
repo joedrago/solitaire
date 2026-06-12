@@ -18,6 +18,10 @@ enum Direction {
 struct NavSpot {
     let spot: Spot
     let x: Double
+    // If set, this bottom-row spot is vertically tied to that work column:
+    // only that column reaches it with up/down, so other columns' vertical
+    // movement stays within themselves.
+    var column: Int? = nil
 }
 
 struct NavModel {
@@ -69,7 +73,11 @@ struct NavModel {
                 }
             }
         } else if state.draw.pos == "bottom" {
-            nav.bottom.append(NavSpot(spot: Spot(.draw), x: 0))
+            // Stock is tied under column 0. Skip it entirely when empty (these
+            // modes have no redeal) so it can't be targeted.
+            if !state.draw.cards.isEmpty {
+                nav.bottom.append(NavSpot(spot: Spot(.draw), x: 0, column: 0))
+            }
         }
         if let reserve = state.reserve, reserve.pos == "middle" {
             for i in reserve.cols.indices {
@@ -100,6 +108,31 @@ struct NavModel {
         var best = 0
         var bestDist = Double.greatestFiniteMagnitude
         for (i, navSpot) in row.enumerated() {
+            let d = abs(navSpot.x - x)
+            if d < bestDist {
+                bestDist = d
+                best = i
+            }
+        }
+        return best
+    }
+
+    // The bottom spot a work column should bridge to with up/down: a spot tied
+    // to this column if there is one, otherwise the nearest untied spot (the
+    // shared draw/pile/reserve of middle-layout modes). A spot tied to a
+    // *different* column is never returned, keeping its column's chain private.
+    func bottomTarget(forColumn col: Int) -> Int? {
+        if let i = bottom.firstIndex(where: { $0.column == col }) {
+            return i
+        }
+        return freeBottomNearest(toX: Double(col))
+    }
+
+    // Nearest bottom spot that isn't tied to a specific column.
+    func freeBottomNearest(toX x: Double) -> Int? {
+        var best: Int?
+        var bestDist = Double.greatestFiniteMagnitude
+        for (i, navSpot) in bottom.enumerated() where navSpot.column == nil {
             let d = abs(navSpot.x - x)
             if d < bestDist {
                 bestDist = d
