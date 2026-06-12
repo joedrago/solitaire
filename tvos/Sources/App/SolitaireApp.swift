@@ -33,6 +33,7 @@ struct GameScreen: View {
                 ToastOverlay(model: model, won: false)
             }
         }
+        .ignoresSafeArea()
         .preferredColorScheme(.dark)
     }
 }

@@ -29,6 +29,7 @@ struct CardPlacement: Identifiable {
     // The clickable spot this card occupies, if any. Lets the cursor attach to
     // its target card in the render loop so overlapping cards occlude it.
     let spot: Spot?
+    var opacity: Double = 1
 }
 
 // Layout port of SolitaireView.render(): positions are computed in units of
@@ -48,10 +49,10 @@ struct BoardGeometry {
 
     private mutating func place(
         _ key: String, _ raw: Int, _ x: CGFloat, _ y: CGFloat,
-        spot: Spot? = nil, selected: SelectedState = .none, z: Double = 0
+        spot: Spot? = nil, selected: SelectedState = .none, z: Double = 0, opacity: Double = 1
     ) {
         let rect = CGRect(x: x, y: y, width: unit * Self.cardWidth / Self.cardHeight, height: unit)
-        placements.append(CardPlacement(id: key, raw: raw, rect: rect, selected: selected, zIndex: z, spot: spot))
+        placements.append(CardPlacement(id: key, raw: raw, rect: rect, selected: selected, zIndex: z, spot: spot, opacity: opacity))
         if let spot {
             spotRects[spot] = rect
         }
@@ -205,18 +206,18 @@ struct BoardGeometry {
         }
 
         if state.draw.pos == "bottom" {
-            // Stock tied under column 0. Anchored just below the reserved column
-            // area, so it's fully visible where there's bottom slack (Spider)
-            // and peeks up from the screen edge in the tight 7-wide layouts —
-            // no extra width is reserved, so the board never zooms out.
-            // When empty (no redeal in these modes) it's a non-targetable guide.
+            // Stock tied under column 0, peeking up from the screen edge — only
+            // the top quarter shows. No extra width is reserved, so the board
+            // never zooms out. When empty (no redeal in these modes) it's a
+            // non-targetable guide.
             let isEmpty = state.draw.cards.isEmpty
             let drawCard = isEmpty ? CardUtils.GUIDE : CardUtils.BACK
             b.place(
                 "draw", drawCard,
                 renderOffsetL + centerCardMargin * unit,
-                min(workBottom * unit, size.height - 0.4 * unit),
-                spot: isEmpty ? nil : Spot(.draw)
+                size.height - 0.25 * unit,
+                spot: isEmpty ? nil : Spot(.draw),
+                opacity: 0.75
             )
         }
 

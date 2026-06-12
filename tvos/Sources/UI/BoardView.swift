@@ -156,6 +156,7 @@ struct CardImage: View {
             .resizable()
             .frame(width: p.rect.width, height: p.rect.height)
             .modifier(CardFX(t: treatment))
+            .opacity(p.opacity)
             .overlay(selectionBorder)
             .overlay(cursorBorder)
             .position(x: p.rect.midX, y: p.rect.midY)
