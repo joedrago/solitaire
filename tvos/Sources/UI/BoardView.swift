@@ -35,11 +35,12 @@ struct BoardView: View {
     var body: some View {
         GeometryReader { geo in
             let state = model.game.state!
-            let board = BoardGeometry.compute(state: state, size: geo.size)
+            let won = model.game.won()
+            let board = BoardGeometry.compute(state: state, size: geo.size, won: won)
             let cursorSpot = cursorTargetSpot(board)
 
             ZStack(alignment: .topLeading) {
-                ForEach(board.placements) { p in
+                ForEach(Array(board.placements.enumerated()), id: \.element.id) { index, p in
                     // Drawing the cursor as part of its target card (rather than
                     // a top-level overlay) lets overlapping cards occlude it, so
                     // the outline hugs the visible portion of a buried card.
@@ -50,6 +51,16 @@ struct BoardView: View {
                         cursor: cursorSpot != nil && p.spot == cursorSpot,
                         cursorColor: cursorColor
                     )
+                    // The win fan sweeps in left to right: cards already on the
+                    // table glide to their arc slots, the rest pop in on the
+                    // same per-slot delay.
+                    .transition(won
+                        ? AnyTransition.opacity.combined(with: .scale(scale: 0.5))
+                            .animation(.easeOut(duration: 0.5).delay(Double(index) * 0.04))
+                        : .opacity)
+                    .animation(won
+                        ? .easeInOut(duration: 0.9).delay(Double(index) * 0.04)
+                        : .easeOut(duration: 0.18), value: model.version)
                 }
 
                 texts(state: state, board: board, screen: geo.size)
@@ -169,6 +180,7 @@ struct CardImage: View {
             .opacity(p.opacity)
             .overlay(selectionBorder)
             .overlay(cursorBorder)
+            .rotationEffect(.degrees(p.rotation))
             .position(x: p.rect.midX, y: p.rect.midY)
             .zIndex(p.zIndex)
     }

@@ -30,6 +30,7 @@ struct CardPlacement: Identifiable {
     // its target card in the render loop so overlapping cards occlude it.
     let spot: Spot?
     var opacity: Double = 1
+    var rotation: Double = 0 // degrees, used by the win fan
 }
 
 // Layout port of SolitaireView.render(): positions are computed in units of
@@ -53,7 +54,8 @@ struct BoardGeometry {
 
     private mutating func place(
         _ key: String, _ raw: Int, _ x: CGFloat, _ y: CGFloat,
-        spot: Spot? = nil, selected: SelectedState = .none, z: Double = 0, opacity: Double = 1
+        spot: Spot? = nil, selected: SelectedState = .none, z: Double = 0, opacity: Double = 1,
+        rotation: Double = 0
     ) {
         // Real cards get an identity that follows the card rather than the
         // board slot, so SwiftUI animates a moved card from its old position
@@ -69,15 +71,23 @@ struct BoardGeometry {
         }
 
         let rect = CGRect(x: x, y: y, width: unit * Self.cardWidth / Self.cardHeight, height: unit)
-        placements.append(CardPlacement(id: key, raw: raw, rect: rect, selected: selected, zIndex: z, spot: spot, opacity: opacity))
+        placements.append(CardPlacement(
+            id: key, raw: raw, rect: rect, selected: selected, zIndex: z, spot: spot,
+            opacity: opacity, rotation: rotation
+        ))
         if let spot {
             spotRects[spot] = rect
         }
     }
 
-    static func compute(state: GameState, size: CGSize) -> BoardGeometry {
+    static func compute(state: GameState, size: CGSize, won: Bool = false) -> BoardGeometry {
         var b = BoardGeometry()
         b.size = size
+
+        if won {
+            b.computeWinFan()
+            return b
+        }
 
         // Calculate necessary table extents, pretending a card is 1.0 units tall
         var largestWork = minimumScaleInCardHeights
@@ -274,5 +284,33 @@ struct BoardGeometry {
         }
 
         return b
+    }
+
+    // Win celebration: the whole deck fans into a rainbow arch, each card
+    // rotated to the arc's tangent. This is a graphic, not a state display —
+    // it's always one full sorted deck regardless of mode, because won states
+    // don't retain every card (foundations only track their top). Cards still
+    // on the table fly to their arc slots via identity; the rest fade in.
+    private mutating func computeWinFan() {
+        unit = size.height * 0.22
+        let radius = size.height * 0.75
+        let centerX = size.width / 2
+        let centerY = size.height * 1.05
+        let spread = 150.0 // degrees, end to end
+        let cardW = unit * Self.cardWidth / Self.cardHeight
+
+        for card in 0..<52 {
+            let t = Double(card) / 51.0
+            let deg = spread * (t - 0.5)
+            let rad = CGFloat(deg * .pi / 180)
+            let x = centerX + radius * sin(rad)
+            let y = centerY - radius * cos(rad)
+            place(
+                "winfan", card,
+                x - cardW / 2, y - unit / 2,
+                z: Double(card),
+                rotation: deg
+            )
+        }
     }
 }
