@@ -406,6 +406,16 @@ final class SolitaireGame {
     }
 }
 
+// Concatenates `copies` copies of cards, tagging each repeat with COPY bits so
+// duplicate cards stay distinguishable (see CardUtils.COPY_MASK).
+func deckCopies(_ cards: [Int], _ copies: Int) -> [Int] {
+    var deck: [Int] = []
+    for copy in 0..<copies {
+        deck.append(contentsOf: cards.map { $0 | (copy << CardUtils.COPY_SHIFT) })
+    }
+    return deck
+}
+
 func shuffled(_ array: [Int]) -> [Int] {
     var array = array
     for i in stride(from: array.count - 1, to: 0, by: -1) {

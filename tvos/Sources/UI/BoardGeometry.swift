@@ -48,8 +48,10 @@ struct BoardGeometry {
     var unit: CGFloat = 100 // one card height, in pixels
     var size: CGSize = .zero
 
-    // Occurrence counters for real cards, so duplicate raws (two-deck modes
-    // like Spider) still get distinct, deterministic ids in layout order.
+    // Occurrence counters for real cards. Multi-deck modes tag duplicate
+    // copies with COPY bits, so raws are normally unique already; this is a
+    // fallback that keeps ids distinct for saves predating the tags (their
+    // animations stay layout-order guesses until a new game is dealt).
     private var cardOccurrences: [Int: Int] = [:]
 
     private mutating func place(
@@ -61,7 +63,9 @@ struct BoardGeometry {
         // board slot, so SwiftUI animates a moved card from its old position
         // to its new one instead of treating the move as remove+insert. The
         // flip flag is masked off so a card keeps its identity when it turns
-        // face-up. Pseudo-cards (guides, the stock) keep their positional key.
+        // face-up, but the COPY bits stay in: they're what keep the twin
+        // copies in multi-deck games from trading identities (and animations)
+        // mid-move. Pseudo-cards (guides, the stock) keep their positional key.
         var key = key
         if raw >= 0 {
             let card = raw & ~CardUtils.FLIP_FLAG

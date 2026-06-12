@@ -11,6 +11,15 @@ enum CardUtils {
     static let READY = -5
     static let FLIP_FLAG = 1024
 
+    // Multi-deck games tag each repeat copy of a card with these bits so every
+    // physical card has a unique raw for its whole life. The tag is pure
+    // identity: info() and rendering mask it off, game logic never sees it,
+    // but it lets the board animate the copy that actually moved instead of
+    // guessing by layout order (and flying cards between identical twins).
+    // Two bits covers the worst case (easy Spider deals four copies per card).
+    static let COPY_SHIFT = 11
+    static let COPY_MASK = 3 << COPY_SHIFT
+
     struct Info {
         let value: Int
         let valueName: String
@@ -24,7 +33,7 @@ enum CardUtils {
             return Info(value: rawIn, valueName: "", suit: rawIn, flip: rawIn == BACK, red: false)
         }
         let flip = (rawIn & FLIP_FLAG) == FLIP_FLAG
-        let raw = rawIn & ~FLIP_FLAG
+        let raw = rawIn & ~(FLIP_FLAG | COPY_MASK)
         let suit = raw / 13
         let value = raw % 13
 

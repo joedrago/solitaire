@@ -226,7 +226,7 @@ struct CardImage: View {
             if (raw & CardUtils.FLIP_FLAG) != 0 {
                 return "cardBack"
             }
-            return "card\(raw & ~CardUtils.FLIP_FLAG)"
+            return "card\(raw & ~(CardUtils.FLIP_FLAG | CardUtils.COPY_MASK))"
         }
     }
 }
