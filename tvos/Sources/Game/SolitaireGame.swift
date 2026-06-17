@@ -8,6 +8,13 @@ final class SolitaireGame {
     var hard: Bool = false // toggle for the *next* game; state.hard is this game's
     var undoStack: [GameState] = []
 
+    // The seed of the *current* deal. Modes shuffle from `rng`, which is built
+    // from this seed, so the same seed always deals the same game. Mirrored
+    // onto state.seed (so it saves and displays); kept here too for "Start
+    // Over" (re-deal the current seed).
+    var seed: Int = 0
+    var rng = SeededGenerator(seed: 0)
+
     let modeOrder = ["baker", "eagle", "emperor", "freecell", "golf", "klondike", "scorpion", "spider", "spiderette", "yukon"]
     let modes: [String: GameMode] = [
         "baker": BakerMode(),
@@ -26,6 +33,14 @@ final class SolitaireGame {
 
     init() {
         if !load() {
+            newGame()
+        }
+    }
+
+    // Bare instance for the solver: no load, no deal, no saved-state side
+    // effects. The caller sets modeId/state and drives mode logic directly.
+    init(load doLoad: Bool) {
+        if doLoad, !load() {
             newGame()
         }
     }
@@ -49,6 +64,7 @@ final class SolitaireGame {
         modeId = payload.mode
         hard = payload.hard
         state = payload.state
+        seed = payload.state.seed ?? 0
         undoStack = []
         return true
     }
@@ -79,13 +95,41 @@ final class SolitaireGame {
     // -----------------------------------------------------------------------------------------------
     // Generic input handlers
 
-    func newGame(_ newMode: String? = nil) {
+    func newGame(_ newMode: String? = nil, seed: Int? = nil) {
         if let newMode, modes[newMode] != nil {
             modeId = newMode
         }
+        let useSeed = seed ?? randomSeed()
+        self.seed = useSeed
+        rng = SeededGenerator(seed: useSeed)
         mode.newGame(self)
+        state.seed = useSeed
         undoStack = []
         save()
+    }
+
+    // Parse a typed seed. Accepts the bare number or the QR's "SOL"-prefixed
+    // form (the QR payload is prefixed so phones don't read the digits as a
+    // phone number); strips that prefix and surrounding whitespace. Returns nil
+    // if what's left isn't a number.
+    static func parseSeed(_ text: String) -> Int? {
+        var s = text.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        if s.hasPrefix("SOL") {
+            s = String(s.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+        }
+        return Int(s)
+    }
+
+    // Seeded Fisher-Yates the modes deal from (replaces the old free `shuffled`
+    // that used the system RNG). Draws come from `rng`, so a given seed always
+    // produces the same deck.
+    func shuffled(_ array: [Int]) -> [Int] {
+        var array = array
+        for i in stride(from: array.count - 1, to: 0, by: -1) {
+            let j = rng.int(below: i + 1)
+            array.swapAt(i, j)
+        }
+        return array
     }
 
     func click(_ type: SpotType, _ outerIndex: Int = 0, _ innerIndex: Int = 0, isRightClick: Bool = false) {
@@ -414,13 +458,4 @@ func deckCopies(_ cards: [Int], _ copies: Int) -> [Int] {
         deck.append(contentsOf: cards.map { $0 | (copy << CardUtils.COPY_SHIFT) })
     }
     return deck
-}
-
-func shuffled(_ array: [Int]) -> [Int] {
-    var array = array
-    for i in stride(from: array.count - 1, to: 0, by: -1) {
-        let j = Int.random(in: 0...i)
-        array.swapAt(i, j)
-    }
-    return array
 }

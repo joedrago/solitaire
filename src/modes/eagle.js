@@ -58,7 +58,7 @@ mode.newGame = function () {
         }
     }
 
-    const deck = cardutils.shuffle(cardutils.range(0, 52))
+    const deck = cardutils.shuffle(cardutils.range(0, 52), this.rng)
 
     for (let columnIndex = 0; columnIndex < 8; ++columnIndex) {
         this.state.work[columnIndex] = [deck.shift()]

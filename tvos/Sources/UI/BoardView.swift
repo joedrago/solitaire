@@ -32,6 +32,18 @@ struct BoardView: View {
         dark ? Color(white: 0.45) : Color(white: 0.55)
     }
 
+    // The "paper" behind the seed QR. The modules stay solid black; only this
+    // field is dimmed so the code never glares. It tracks dark mode (gray in
+    // light, dimmer, warm in candlelight) but stays clearly lighter than the
+    // black modules so a scanner keeps the contrast it needs.
+    private var qrFieldColor: Color {
+        switch model.darkMode {
+        case .off: return Color(white: 0.6)
+        case .dim: return Color(white: 0.48)
+        case .candlelight: return Color(red: 0.52, green: 0.46, blue: 0.32)
+        }
+    }
+
     var body: some View {
         GeometryReader { geo in
             let state = model.game.state!
@@ -124,14 +136,32 @@ struct BoardView: View {
         }
 
         // The game name doubles as an affordance hint: muted gray normally, but
-        // bold bright yellow when Auto-Finish is available in the menu.
+        // bold bright yellow when Auto-Finish is available in the menu. Beneath
+        // it sit the seed and its QR code so a deal can be re-dealt, typed in,
+        // or scanned to share. The QR's paper field follows dark mode (white /
+        // dim gray / warm) while its modules stay black, so it never glares at
+        // night yet stays scannable.
         let gameLabel = "\(model.game.mode.name)\(state.hard ? " (Hard)" : "")"
         let canAutoFinish = model.game.canAutoWin()
-        Text(gameLabel)
-            .font(.system(size: 26, weight: canAutoFinish ? .bold : .regular, design: .monospaced))
-            .foregroundColor(canAutoFinish ? Color.yellow : labelColor)
-            .shadow(color: .black, radius: 0, x: 2, y: 2)
-            .position(x: screen.width - CGFloat(gameLabel.count) * 8 - 30, y: screen.height - 30)
+        VStack(alignment: .trailing, spacing: 4) {
+            Text(gameLabel)
+                .font(.system(size: 26, weight: canAutoFinish ? .bold : .regular, design: .monospaced))
+                .foregroundColor(canAutoFinish ? Color.yellow : labelColor)
+            Text("Seed \(model.game.seed)")
+                .font(.system(size: 18, design: .monospaced))
+                .foregroundColor(labelColor)
+            if let qr = model.seedQR {
+                qr
+                    .resizable()
+                    .interpolation(.none)
+                    .frame(width: unit * 0.24, height: unit * 0.24)
+                    .padding(unit * 0.036)
+                    .background(qrFieldColor)
+                    .cornerRadius(unit * 0.024)
+            }
+        }
+        .shadow(color: .black, radius: 0, x: 2, y: 2)
+        .frame(width: screen.width - 24, height: screen.height - 24, alignment: .bottomTrailing)
     }
 
     private func timerText(_ state: GameState) -> String {

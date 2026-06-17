@@ -37,7 +37,7 @@ Hard - 17 cards in the reserve pile.
             reserve: ReserveState(pos: "middle", cols: [[]])
         )
 
-        var deck = shuffled(Array(0..<52))
+        var deck = g.shuffled(Array(0..<52))
 
         for _ in 0..<8 {
             g.state.work.append([deck.removeFirst()])

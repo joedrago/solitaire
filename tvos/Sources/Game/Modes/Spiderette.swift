@@ -38,7 +38,7 @@ Hard - 3 cards are dealt face down to columns.
             foundations: []
         )
 
-        var deck = shuffled(Array(0..<52))
+        var deck = g.shuffled(Array(0..<52))
         let faceDownCount = g.hard ? 3 : 2
         for _ in 0..<7 {
             var col: [Int] = []

@@ -3,7 +3,7 @@ DEVELOPMENT_TEAM ?= $(shell security find-certificate -c "Apple Development" -p 
 PROJECT = Solitaire.xcodeproj
 SCHEME = Solitaire
 
-.PHONY: generate build simulator install run list clean
+.PHONY: generate build simulator install run list clean solve verify
 
 generate: $(PROJECT)
 
@@ -47,4 +47,15 @@ list:
 	@xcrun devicectl list devices 2>/dev/null | grep 'Apple TV'
 
 clean:
-	rm -rf $(PROJECT) build DerivedData
+	rm -rf $(PROJECT) build DerivedData solve verify
+
+# Command-line winnability solver. Usage: ./solve <game> <seed> [hard]
+solve:
+	swiftc -O Sources/Game/*.swift Sources/Game/Modes/*.swift tools/main.swift -o solve
+	@echo 'built ./solve — usage: ./solve <game> <seed> [hard]'
+
+# Solver verifier: replays the solver's moves through the real engine and
+# asserts a win. Usage: ./verify <game> <seed> [hard]  |  ./verify <game> batch <count> [hard]
+verify:
+	swiftc -O Sources/Game/*.swift Sources/Game/Modes/*.swift tools/verify.swift -o verify
+	@echo 'built ./verify — usage: ./verify <game> <seed> [hard] | ./verify <game> batch <count> [hard]'

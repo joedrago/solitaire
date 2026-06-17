@@ -38,6 +38,7 @@ struct ReserveState: Codable, Equatable {
 
 struct GameState: Codable, Equatable {
     var hard: Bool
+    var seed: Int? = nil
     var draw: DrawState
     var selection: Selection = Selection()
     var pile: PileState

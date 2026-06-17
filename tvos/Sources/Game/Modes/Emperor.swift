@@ -36,7 +36,7 @@ Hard - Only one card may be moved at a time. (original rules)
             foundations: Array(repeating: CardUtils.GUIDE, count: 8)
         )
 
-        var deck = shuffled(deckCopies(Array(0..<52), 2))
+        var deck = g.shuffled(deckCopies(Array(0..<52), 2))
         for _ in 0..<10 {
             var col: [Int] = []
             for _ in 0..<3 {

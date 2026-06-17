@@ -38,7 +38,7 @@ Hard - 6 columns of 6 cards each.
         g.state.timerEnd = nil
         g.state.timerColor = "#fff"
 
-        var deck = shuffled(Array(0..<52))
+        var deck = g.shuffled(Array(0..<52))
 
         let columnCount = g.hard ? 6 : 7
         let cardCount = g.hard ? 6 : 5

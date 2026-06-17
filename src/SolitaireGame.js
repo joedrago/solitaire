@@ -10,6 +10,13 @@ class SolitaireGame {
         this.hard = false // this is the toggle for the *next* game. Check @state.hard to see if *this* game is hard
         this.undoStack = []
 
+        // The seed of the *current* deal. The deck is shuffled from this.rng,
+        // which makeRng() derives from the seed, so the same seed always deals
+        // the same game. Stored on this.state too (so it saves and displays);
+        // kept here as well for "Start Over" (re-deal the current seed).
+        this.seed = null
+        this.rng = Math.random
+
         this.modes = {}
         this.loadMode("baker")
         this.loadMode("eagle")
@@ -79,6 +86,7 @@ class SolitaireGame {
         this.mode = payload.mode
         this.hard = payload.hard == true
         this.state = payload.state
+        this.seed = payload.state != null ? payload.state.seed : null
         this.undoStack = []
         console.log("Loaded.")
         return true
@@ -129,12 +137,18 @@ class SolitaireGame {
     // -----------------------------------------------------------------------------------------------
     // Generic input handlers
 
-    newGame(newMode = null) {
+    newGame(newMode = null, seed = null) {
         if (newMode != null && this.modes[newMode] != null) {
             this.mode = newMode
         }
         if (this.modes[this.mode] != null) {
+            if (seed == null) {
+                seed = cardutils.randomSeed()
+            }
+            this.seed = seed
+            this.rng = cardutils.makeRng(seed)
             this.modes[this.mode].newGame()
+            this.state.seed = seed
             this.undoStack = []
             this.save()
         }

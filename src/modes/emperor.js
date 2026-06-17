@@ -56,7 +56,7 @@ mode.newGame = function () {
         work: []
     }
 
-    const deck = cardutils.shuffle(cardutils.range(0, 52).concat(cardutils.range(0, 52)))
+    const deck = cardutils.shuffle(cardutils.range(0, 52).concat(cardutils.range(0, 52)), this.rng)
     for (let columnIndex = 0; columnIndex < 10; ++columnIndex) {
         var col = []
         for (var i = 0; i < 3; ++i) {

@@ -50,7 +50,7 @@ mode.newGame = function () {
     }
 
     if (this.hard) {
-        deck = cardutils.shuffle(cardutils.range(0, 52).concat(cardutils.range(0, 52)))
+        deck = cardutils.shuffle(cardutils.range(0, 52).concat(cardutils.range(0, 52)), this.rng)
     } else {
         const blacks = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
             .concat([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
@@ -60,7 +60,7 @@ mode.newGame = function () {
             .concat([39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51])
             .concat([39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51])
             .concat([39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51])
-        deck = cardutils.shuffle(reds.concat(blacks))
+        deck = cardutils.shuffle(reds.concat(blacks), this.rng)
     }
     for (let columnIndex = 0; columnIndex < 10; ++columnIndex) {
         var col = []

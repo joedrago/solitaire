@@ -37,7 +37,7 @@ Hard - 3 cards face down in the first 4 columns. Fill empties with Kings only.
             foundations: []
         )
 
-        var deck = shuffled(Array(0..<52))
+        var deck = g.shuffled(Array(0..<52))
         let faceDownCount = g.hard ? 3 : 2
         let faceUpCount = g.hard ? 4 : 5
         for columnIndex in 0..<7 {

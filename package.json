@@ -27,5 +27,8 @@
     "tabWidth": 4,
     "trailingComma": "none",
     "semi": false
+  },
+  "dependencies": {
+    "qrcode.react": "^4.2.0"
   }
 }

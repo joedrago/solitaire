@@ -48,7 +48,7 @@ Hard - There are only two cells.
             g.state.reserve?.cols.append([])
         }
 
-        var deck = shuffled(Array(0..<52))
+        var deck = g.shuffled(Array(0..<52))
         for columnIndex in 0..<8 {
             var col: [Int] = []
             let colCount = columnIndex < 4 ? 7 : 6

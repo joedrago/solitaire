@@ -40,14 +40,14 @@ Hard - The last non-King card is face down in each column.
         nonKings.append(contentsOf: 13...24)
         nonKings.append(contentsOf: 26...37)
         nonKings.append(contentsOf: 39...50)
-        var deck = shuffled(nonKings)
-        let kings = shuffled([12, 25, 38, 51])
+        var deck = g.shuffled(nonKings)
+        let kings = g.shuffled([12, 25, 38, 51])
 
         for _ in 0..<13 {
             g.state.work.append([])
         }
 
-        let kingPositions = Array(shuffled(Array(0...12)).prefix(4))
+        let kingPositions = Array(g.shuffled(Array(0...12)).prefix(4))
         for (pIndex, p) in kingPositions.enumerated() {
             g.state.work[p].append(kings[pIndex])
         }

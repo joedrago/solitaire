@@ -13,6 +13,9 @@ import Typography from "@mui/material/Typography"
 
 import Button from "@mui/material/Button"
 import IconButton from "@mui/material/IconButton"
+import TextField from "@mui/material/TextField"
+
+import { QRCodeSVG } from "qrcode.react"
 
 import List from "@mui/material/List"
 import ListItem from "@mui/material/ListItem"
@@ -26,6 +29,8 @@ import FullscreenIcon from "@mui/icons-material/Fullscreen"
 import MenuIcon from "@mui/icons-material/Menu"
 import BookIcon from "@mui/icons-material/Book"
 import ReplayIcon from "@mui/icons-material/Replay"
+import RestartAltIcon from "@mui/icons-material/RestartAlt"
+import DialpadIcon from "@mui/icons-material/Dialpad"
 import SickIcon from "@mui/icons-material/Sick"
 import UndoIcon from "@mui/icons-material/Undo"
 
@@ -51,6 +56,8 @@ class App extends Component {
             winToastOpen: false,
             loseToastOpen: false,
             helpOpen: false,
+            seedDialogOpen: false,
+            seedInputValue: "",
             hard: this.game.hard,
             useTouch: false // navigator.maxTouchPoints? and (navigator.maxTouchPoints > 0)
         }
@@ -200,6 +207,24 @@ class App extends Component {
                 this.setState({
                     drawerOpen: false,
                     gameState: this.game.state
+                })
+            })
+        )
+        drawerItems.push(
+            this.createDrawerButton("startOverMenu", RestartAltIcon, "Start Over (same deal)", () => {
+                this.game.newGame(null, this.game.seed)
+                this.setState({
+                    drawerOpen: false,
+                    gameState: this.game.state
+                })
+            })
+        )
+        drawerItems.push(
+            this.createDrawerButton("chooseGameMenu", DialpadIcon, "Choose Game (by seed)…", () => {
+                this.setState({
+                    drawerOpen: false,
+                    seedDialogOpen: true,
+                    seedInputValue: String(this.game.seed != null ? this.game.seed : "")
                 })
             })
         )
@@ -443,6 +468,67 @@ class App extends Component {
             ]
         )
 
+        const commitSeed = () => {
+            const parsed = parseInt(this.state.seedInputValue, 10)
+            if (!isNaN(parsed)) {
+                this.game.newGame(null, parsed)
+                this.setState({
+                    seedDialogOpen: false,
+                    gameState: this.game.state
+                })
+            }
+        }
+        const seedDialog = el(
+            Dialog,
+            {
+                key: "seedDialog",
+                open: this.state.seedDialogOpen,
+                onClose: () => {
+                    this.setState({ seedDialogOpen: false })
+                }
+            },
+            [
+                el(DialogTitle, { key: "seedDialogTitle" }, ["Choose Game"]),
+                el(
+                    DialogContent,
+                    { key: "seedDialogContent" },
+                    [
+                        el(
+                            DialogContentText,
+                            { key: "seedDialogText" },
+                            ["Enter a seed to deal that exact game. Share a seed (or scan its QR) to play the same deal as a friend."]
+                        ),
+                        el(TextField, {
+                            key: "seedDialogField",
+                            autoFocus: true,
+                            margin: "dense",
+                            label: "Seed",
+                            type: "number",
+                            fullWidth: true,
+                            variant: "standard",
+                            value: this.state.seedInputValue,
+                            onChange: (e) => {
+                                this.setState({ seedInputValue: e.target.value })
+                            },
+                            onKeyDown: (e) => {
+                                if (e.key === "Enter") {
+                                    commitSeed()
+                                }
+                            }
+                        })
+                    ]
+                ),
+                el(
+                    DialogActions,
+                    { key: "seedDialogActions" },
+                    [
+                        el(Button, { key: "seedDialogCancel", onClick: () => this.setState({ seedDialogOpen: false }) }, ["Cancel"]),
+                        el(Button, { key: "seedDialogPlay", onClick: commitSeed }, ["Play"])
+                    ]
+                )
+            ]
+        )
+
         const gameText = el(
             "div",
             {
@@ -473,7 +559,22 @@ class App extends Component {
                     "div",
                     { key: "gameAndDiff" },
                     `${this.game.modes[this.game.mode].name}${this.game.state.hard ? " (Hard)" : ""}`
-                )
+                ),
+                this.game.seed != null &&
+                    el("div", { key: "seedLine", style: { fontSize: "0.8em", opacity: 0.85 } }, `Seed ${this.game.seed}`),
+                this.game.seed != null &&
+                    el(
+                        "div",
+                        { key: "seedQR", style: { marginTop: 4, display: "inline-block", background: "#fff", padding: 3, borderRadius: 2 } },
+                        [
+                            el(QRCodeSVG, {
+                                key: "seedQRCode",
+                                value: String(this.game.seed),
+                                size: 56,
+                                level: "M"
+                            })
+                        ]
+                    )
             ]
         )
 
@@ -482,7 +583,7 @@ class App extends Component {
             {
                 key: "appcontainer"
             },
-            [drawer, gameView, menuButton, winToast, loseToast, helpDialog, gameText]
+            [drawer, gameView, menuButton, winToast, loseToast, helpDialog, seedDialog, gameText]
         )
     }
 

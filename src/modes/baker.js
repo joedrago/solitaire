@@ -55,15 +55,16 @@ mode.newGame = function () {
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
             .concat([13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])
             .concat([26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37])
-            .concat([39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50])
+            .concat([39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50]),
+        this.rng
     )
-    const kings = cardutils.shuffle([12, 25, 38, 51])
+    const kings = cardutils.shuffle([12, 25, 38, 51], this.rng)
 
     for (let columnIndex = 0; columnIndex < 13; ++columnIndex) {
         this.state.work.push([])
     }
 
-    const kingPositions = cardutils.shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]).slice(0, 4)
+    const kingPositions = cardutils.shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], this.rng).slice(0, 4)
     for (let pIndex = 0; pIndex < kingPositions.length; ++pIndex) {
         let p = kingPositions[pIndex]
         this.state.work[p].push(kings[pIndex])

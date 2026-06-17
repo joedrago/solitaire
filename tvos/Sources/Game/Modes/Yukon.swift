@@ -34,7 +34,7 @@ Hard - Columns are built on alternating colors.
             foundations: [CardUtils.GUIDE, CardUtils.GUIDE, CardUtils.GUIDE, CardUtils.GUIDE]
         )
 
-        var deck = shuffled(Array(0..<52))
+        var deck = g.shuffled(Array(0..<52))
         g.state.work.append([deck.removeFirst()])
         for columnIndex in 1..<7 {
             var col: [Int] = []

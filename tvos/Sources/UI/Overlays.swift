@@ -94,6 +94,27 @@ struct HelpOverlay: View {
     }
 }
 
+// Shown while "Winnable only" searches seeds for a solvable deal.
+struct ShufflingOverlay: View {
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.72).ignoresSafeArea()
+
+            VStack(spacing: 18) {
+                ProgressView()
+                    .scaleEffect(1.6)
+                    .tint(.white)
+                Text("Shuffling…")
+                    .font(.system(size: 40, weight: .bold))
+                    .foregroundColor(.white)
+                Text("Finding a deal you can win")
+                    .font(.system(size: 24))
+                    .foregroundColor(.gray)
+            }
+        }
+    }
+}
+
 struct ToastOverlay: View {
     @ObservedObject var model: AppModel
     let won: Bool

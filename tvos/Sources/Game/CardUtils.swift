@@ -97,3 +97,50 @@ enum CardUtils {
         Date().timeIntervalSince1970 * 1000
     }
 }
+
+// Deterministic seeded RNG (mulberry32), mirroring src/cardutils.js makeRng. A
+// "seed" is a human-friendly integer the player can read off the screen, scan
+// from the QR code, or type back in; it fully determines the deal, so the same
+// seed always deals the same game. hashSeed folds the seed so that nearby seeds
+// (1000 vs 1001) still produce wildly different deals.
+struct SeededGenerator: RandomNumberGenerator {
+    private var state: UInt32
+
+    init(seed: Int) {
+        state = SeededGenerator.hashSeed(seed)
+    }
+
+    static func hashSeed(_ seedInput: Int) -> UInt32 {
+        let str = String(seedInput)
+        var h: UInt32 = 1779033703 ^ UInt32(truncatingIfNeeded: str.count)
+        for scalar in str.unicodeScalars {
+            h = (h ^ scalar.value) &* 3432918353
+            h = (h << 13) | (h >> 19)
+        }
+        h = (h ^ (h >> 16)) &* 2246822507
+        h = (h ^ (h >> 13)) &* 3266489909
+        return h ^ (h >> 16)
+    }
+
+    mutating func nextU32() -> UInt32 {
+        state = state &+ 0x6D2B79F5
+        var t = (state ^ (state >> 15)) &* (state | 1)
+        t = (t &+ ((t ^ (t >> 7)) &* (t | 61))) ^ t
+        return t ^ (t >> 14)
+    }
+
+    // Fisher-Yates needs an index in 0..<n. Plain modulo: the bias against
+    // 2^32 for n <= 104 is ~10^-8, far below anything a shuffle could reveal.
+    mutating func int(below n: Int) -> Int {
+        Int(nextU32() % UInt32(n))
+    }
+
+    mutating func next() -> UInt64 {
+        (UInt64(nextU32()) << 32) | UInt64(nextU32())
+    }
+}
+
+// A fresh, unpredictable seed for a brand-new random game.
+func randomSeed() -> Int {
+    Int.random(in: 0..<1_000_000_000)
+}

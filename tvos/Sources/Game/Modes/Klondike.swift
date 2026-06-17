@@ -36,7 +36,7 @@ Hard - Cards are flipped 1 card at a time with no redeals.
             foundations: [CardUtils.GUIDE, CardUtils.GUIDE, CardUtils.GUIDE, CardUtils.GUIDE]
         )
 
-        var deck = shuffled(Array(0..<52))
+        var deck = g.shuffled(Array(0..<52))
         for columnIndex in 0..<7 {
             var col: [Int] = []
             for _ in 0..<columnIndex {

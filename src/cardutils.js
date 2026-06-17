@@ -5,9 +5,40 @@ export const DEAD = -4
 export const READY = -5
 export const FLIP_FLAG = 1024
 
-export const shuffle = (array) => {
+// Deterministic, seeded shuffling. A "seed" is just a human-friendly integer
+// the player can read off the screen and type back in (or scan from a QR code).
+// hashSeed folds that number (or any string) into a well-mixed 32-bit state so
+// nearby seeds like 1000/1001 still produce wildly different deals, and makeRng
+// turns that state into a mulberry32 generator drop-in compatible with
+// Math.random. shuffle() defaults to Math.random so any unseeded caller is
+// unchanged; pass an rng to get a reproducible deal from a given seed.
+export const hashSeed = (seedInput) => {
+    const str = String(seedInput)
+    let h = 1779033703 ^ str.length
+    for (let i = 0; i < str.length; i++) {
+        h = Math.imul(h ^ str.charCodeAt(i), 3432918353)
+        h = (h << 13) | (h >>> 19)
+    }
+    h = Math.imul(h ^ (h >>> 16), 2246822507)
+    h = Math.imul(h ^ (h >>> 13), 3266489909)
+    return (h ^ (h >>> 16)) >>> 0
+}
+
+export const makeRng = (seedInput) => {
+    let a = hashSeed(seedInput)
+    return () => {
+        a = (a + 0x6d2b79f5) | 0
+        let t = Math.imul(a ^ (a >>> 15), 1 | a)
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+    }
+}
+
+export const randomSeed = () => Math.floor(Math.random() * 1000000000)
+
+export const shuffle = (array, rng = Math.random) => {
     for (let i = array.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1))
+        var j = Math.floor(rng() * (i + 1))
         var temp = array[i]
         array[i] = array[j]
         array[j] = temp

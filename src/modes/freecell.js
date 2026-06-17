@@ -71,7 +71,7 @@ mode.newGame = function () {
         this.state.reserve.cols.push([])
     }
 
-    const deck = cardutils.shuffle(cardutils.range(0, 52))
+    const deck = cardutils.shuffle(cardutils.range(0, 52), this.rng)
     for (let columnIndex = 0; columnIndex < 8; ++columnIndex) {
         var col = []
         var colCount = 6

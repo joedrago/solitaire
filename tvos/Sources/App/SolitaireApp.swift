@@ -31,6 +31,8 @@ struct GameScreen: View {
                 ToastOverlay(model: model, won: true)
             case .lose:
                 ToastOverlay(model: model, won: false)
+            case .shuffling:
+                ShufflingOverlay()
             }
         }
         .ignoresSafeArea()

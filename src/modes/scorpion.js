@@ -48,7 +48,7 @@ mode.newGame = function () {
         work: []
     }
 
-    const deck = cardutils.shuffle(cardutils.range(0, 52))
+    const deck = cardutils.shuffle(cardutils.range(0, 52), this.rng)
     if (this.hard) {
         faceDownCount = 3
         faceUpCount = 4

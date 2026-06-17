@@ -78,6 +78,16 @@ final class AppModel: ObservableObject {
     @Published var menuIndex = 0
     @Published var menuPage: MenuPage = .main
 
+    // Cached QR image of the current seed (regenerated only when the seed
+    // changes, not every render). Shown beneath the game label.
+    @Published private(set) var seedQR: Image? = nil
+    private var seedQRSeed: Int? = nil
+
+    // Set by RemoteInput: presents the tvOS system keyboard to type a seed,
+    // calling back with the entered seed (or nil if cancelled). Lives here so
+    // the menu action can reach the UIKit presentation layer.
+    var presentSeedEntry: ((Int, @escaping (Int?) -> Void) -> Void)?
+
     // Pure display preference (separate from the game save): dims the felt,
     // card faces, and cursor for play in a dark room. Tri-state, cycled from
     // the menu.
@@ -90,12 +100,27 @@ final class AppModel: ObservableObject {
         didSet { UserDefaults.standard.set(deckColor.rawValue, forKey: "deckColor") }
     }
 
+    // When on, a new *random* game keeps re-dealing seeds until the solver
+    // proves one winnable (shown behind a "Shuffling…" overlay). A typed seed
+    // or "Start Over" is always honored as-is — this only governs fresh deals.
+    @Published var winnableOnly: Bool = UserDefaults.standard.bool(forKey: "winnableOnly") {
+        didSet { UserDefaults.standard.set(winnableOnly, forKey: "winnableOnly") }
+    }
+
+    // Modes with a fast on-device solver wired up. Others deal normally even
+    // with the toggle on. Grows as each game's solver lands. (Emperor has a
+    // correct solver — see `solve`/`verify` — but its 2-deck search is heavy on
+    // time and memory, so it stays out of the on-device toggle pending tuning /
+    // a device memory test.)
+    private let winnableSupported: Set<String> = ["scorpion", "yukon"]
+
     enum Overlay: Equatable {
         case none
         case menu
         case help
         case win
         case lose
+        case shuffling // searching seeds for a winnable deal
     }
 
     // Which page the menu overlay is showing: the main actions, or the
@@ -111,10 +136,22 @@ final class AppModel: ObservableObject {
     init() {
         toastShown = game.won() || game.lost()
         resetCursor()
+        refreshSeedQR()
     }
 
     private func refresh() {
         version += 1
+    }
+
+    // Rebuild the seed QR only when the seed actually changed (cheap guard so
+    // it isn't regenerated on every cursor move / animation tick).
+    private func refreshSeedQR() {
+        if seedQRSeed != game.seed {
+            // "SOL" prefix so a scanning phone reads it as text, not a phone
+            // number. SolitaireGame.parseSeed strips it back off on entry.
+            seedQR = QRCode.image("SOL\(game.seed)")
+            seedQRSeed = game.seed
+        }
     }
 
     private func resetCursor() {
@@ -288,7 +325,7 @@ final class AppModel: ObservableObject {
             } else if dir == .down {
                 menuIndex = min(items.count - 1, menuIndex + 1)
             }
-        case .help, .win, .lose:
+        case .help, .win, .lose, .shuffling:
             break
         }
     }
@@ -302,9 +339,9 @@ final class AppModel: ObservableObject {
         case .help:
             overlay = .none
         case .win, .lose:
-            overlay = .none
-            game.newGame()
-            afterNewGame()
+            startNewGame(mode: nil)
+        case .shuffling:
+            break
         }
     }
 
@@ -323,6 +360,8 @@ final class AppModel: ObservableObject {
         switch overlay {
         case .menu:
             overlay = .none
+        case .shuffling:
+            break // don't interrupt the search
         case .none, .help, .win, .lose:
             menuPage = .main
             menuIndex = 0
@@ -365,6 +404,8 @@ final class AppModel: ObservableObject {
             }
         case .help, .win, .lose:
             overlay = .none
+        case .shuffling:
+            break // can't cancel mid-search
         }
     }
 
@@ -403,7 +444,45 @@ final class AppModel: ObservableObject {
         toastShown = false
         stopAutowin()
         resetCursor()
+        refreshSeedQR()
         refresh()
+    }
+
+    // The single entry point for dealing a fresh *random* game (Play Again, a
+    // variant pick, or playing again after a toast). Honors "Winnable only":
+    // when on (and the mode is supported), it searches seeds off the main
+    // thread behind a "Shuffling…" overlay and deals the first provably
+    // winnable one. Otherwise it deals immediately.
+    func startNewGame(mode: String?) {
+        let targetMode = mode ?? game.modeId
+        guard winnableOnly && winnableSupported.contains(targetMode) else {
+            overlay = .none
+            game.newGame(mode)
+            afterNewGame()
+            return
+        }
+
+        let hard = game.hard
+        overlay = .shuffling
+        refresh()
+
+        // Solver work is CPU-heavy; run it off the main thread so the overlay
+        // animates and the remote stays responsive, then hop back to deal.
+        let worker = Thread {
+            let solver = Solver()
+            let seed = solver.findWinnableSeed(
+                mode: targetMode, hard: hard,
+                perSeedNodes: 2_000_000, perSeedSecs: 3, totalSecs: 25
+            )
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.game.newGame(targetMode, seed: seed)
+                self.overlay = .none
+                self.afterNewGame()
+            }
+        }
+        worker.stackSize = 8 * 1024 * 1024
+        worker.start()
     }
 
     private func checkToasts() {
@@ -468,11 +547,34 @@ final class AppModel: ObservableObject {
             self.refresh()
         })
 
+        items.append(MenuEntry(id: "winnable", label: "Winnable Only: \(winnableOnly ? "On" : "Off")", enabled: true) { [weak self] in
+            guard let self else { return }
+            self.winnableOnly.toggle()
+            self.refresh()
+        })
+
         items.append(MenuEntry(id: "again", label: "Play Again: \(game.mode.name)", enabled: true) { [weak self] in
+            self?.startNewGame(mode: nil)
+        })
+
+        items.append(MenuEntry(id: "startover", label: "Start Over (same deal)", enabled: true) { [weak self] in
             guard let self else { return }
             self.overlay = .none
-            self.game.newGame()
+            self.game.newGame(nil, seed: self.game.seed)
             self.afterNewGame()
+        })
+
+        items.append(MenuEntry(id: "seed", label: "Enter Seed…", enabled: presentSeedEntry != nil) { [weak self] in
+            guard let self, let present = self.presentSeedEntry else { return }
+            present(self.game.seed) { entered in
+                guard let entered else { return }
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.overlay = .none
+                    self.game.newGame(nil, seed: entered)
+                    self.afterNewGame()
+                }
+            }
         })
 
         items.append(MenuEntry(id: "choose", label: "Choose Game…", enabled: true) { [weak self] in
@@ -502,10 +604,8 @@ final class AppModel: ObservableObject {
             guard let mode = game.modes[modeId] else { return nil }
             return MenuEntry(id: "new_\(modeId)", label: mode.name, enabled: true) { [weak self] in
                 guard let self else { return }
-                self.overlay = .none
                 self.menuPage = .main
-                self.game.newGame(modeId)
-                self.afterNewGame()
+                self.startNewGame(mode: modeId)
             }
         }
     }

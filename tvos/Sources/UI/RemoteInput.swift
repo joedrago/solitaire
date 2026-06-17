@@ -26,6 +26,9 @@ struct RemoteInput: UIViewControllerRepresentable {
         vc.onPlayPauseTap = { [weak model] in model?.onPlayPause() }
         vc.menuWantsCapture = { [weak model] in model?.menuWantsCapture() ?? false }
         vc.onMenuTap = { [weak model] in model?.onMenu() }
+        model.presentSeedEntry = { [weak vc] current, completion in
+            vc?.presentSeedEntry(current: current, completion: completion)
+        }
         vc.refreshFocus()
     }
 }
@@ -62,6 +65,30 @@ final class RemotePressCaptureVC: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         refreshFocus()
+    }
+
+    // Presents tvOS's system keyboard to type a seed. A modal alert takes focus
+    // away from the capture view for its lifetime, so the keyboard works
+    // despite this view normally swallowing every press. Returns nil on cancel
+    // or if the entry isn't a number.
+    func presentSeedEntry(current: Int, completion: @escaping (Int?) -> Void) {
+        let alert = UIAlertController(
+            title: "Enter Seed",
+            message: "Type a seed to deal that exact game. Share a seed (or scan its QR) to play the same deal as someone else.",
+            preferredStyle: .alert
+        )
+        alert.addTextField { tf in
+            tf.keyboardType = .numberPad
+            tf.text = "\(current)"
+            tf.placeholder = "Seed"
+        }
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
+            completion(nil)
+        })
+        alert.addAction(UIAlertAction(title: "Play", style: .default) { [weak alert] _ in
+            completion(SolitaireGame.parseSeed(alert?.textFields?.first?.text ?? ""))
+        })
+        present(alert, animated: true)
     }
 
 

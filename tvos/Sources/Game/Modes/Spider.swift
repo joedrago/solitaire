@@ -40,11 +40,11 @@ Hard - Two full decks are used (all four suits). Very hard!
 
         var deck: [Int]
         if g.hard {
-            deck = shuffled(deckCopies(Array(0..<52), 2))
+            deck = g.shuffled(deckCopies(Array(0..<52), 2))
         } else {
             let blacks: [Int] = Array(0...12) // spades
             let reds: [Int] = Array(39...51) // hearts
-            deck = shuffled(deckCopies(reds + blacks, 4))
+            deck = g.shuffled(deckCopies(reds + blacks, 4))
         }
         for _ in 0..<10 {
             var col: [Int] = []

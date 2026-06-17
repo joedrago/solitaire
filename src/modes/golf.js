@@ -50,7 +50,7 @@ mode.newGame = function () {
         timerColor: "#fff"
     }
 
-    const deck = cardutils.shuffle(cardutils.range(0, 52))
+    const deck = cardutils.shuffle(cardutils.range(0, 52), this.rng)
 
     if (this.hard) {
         columnCount = 6
