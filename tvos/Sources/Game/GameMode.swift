@@ -1,5 +1,15 @@
 import Foundation
 
+// A single "you could pick this up and move it somewhere new" suggestion: the
+// spot of the source card a hint highlights. Deliberately a game-layer type
+// (not the UI's Spot) so the CLI solver targets, which compile only
+// Sources/Game, still build; the UI converts these to Spots for rendering.
+struct HintMove: Equatable {
+    let type: SpotType
+    let outer: Int
+    let inner: Int
+}
+
 // Equivalent of the JS mode objects in src/modes/*.js. Each mode owns dealing,
 // click handling, and win/loss detection; shared helpers live on SolitaireGame.
 protocol GameMode {
@@ -16,10 +26,25 @@ protocol GameMode {
     // click produces a distinct selection in this mode. The default (just the
     // topmost card) suits modes that only ever move single cards.
     func cursorStops(_ g: SolitaireGame, _ col: [Int]) -> [Int]
+
+    // Hints. A mode opts in by returning true and implementing `hints`, which
+    // lists the source cards that can be picked up and moved somewhere new. The
+    // board gently highlights these when the player asks for a hint, and uses
+    // `hasMoves` (hint cards plus any other progress, e.g. dealing the stock)
+    // to decide when to show a quiet "Game Over".
+    var supportsHints: Bool { get }
+    func hints(_ g: SolitaireGame) -> [HintMove]
+    func hasMoves(_ g: SolitaireGame) -> Bool
 }
 
 extension GameMode {
     func lost(_ g: SolitaireGame) -> Bool { false }
+
+    var supportsHints: Bool { false }
+
+    func hints(_ g: SolitaireGame) -> [HintMove] { [] }
+
+    func hasMoves(_ g: SolitaireGame) -> Bool { !hints(g).isEmpty }
 
     func cursorStops(_ g: SolitaireGame, _ col: [Int]) -> [Int] {
         col.isEmpty ? [] : [col.count - 1]

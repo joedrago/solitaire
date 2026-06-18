@@ -78,6 +78,11 @@ final class AppModel: ObservableObject {
     @Published var menuIndex = 0
     @Published var menuPage: MenuPage = .main
 
+    // When on, the board gently highlights every card the current mode says can
+    // be picked up and moved somewhere new. Turned on from the menu, and turned
+    // off again the instant the next real move is made (see activateCursor).
+    @Published var hintsActive = false
+
     // Cached QR image of the current seed (regenerated only when the seed
     // changes, not every render). Shown beneath the game label.
     @Published private(set) var seedQR: Image? = nil
@@ -145,6 +150,13 @@ final class AppModel: ObservableObject {
     private var toastShown = false
     private var autowinTimer: Timer?
 
+    // Double-tapping a card is an alias for the long-press "send home" (a common
+    // instinct). We remember the spot and time of the last plain select tap so a
+    // quick second tap on the *same* card can stand in for the long press.
+    private var lastSelectSpot: Spot? = nil
+    private var lastSelectTime: Double = 0
+    private static let doubleTapWindowMs: Double = 450
+
     init() {
         toastShown = game.won() || game.lost()
         resetCursor()
@@ -177,6 +189,15 @@ final class AppModel: ObservableObject {
 
     // -----------------------------------------------------------------------------------------------
     // Cursor
+
+    // The source cards an active hint highlights, as render-layer Spots. Empty
+    // unless a hint is showing (and the mode supports hints at all).
+    func hintSpots() -> Set<Spot> {
+        guard hintsActive, game.mode.supportsHints else {
+            return []
+        }
+        return Set(game.mode.hints(game).map { Spot($0.type, $0.outer, $0.inner) })
+    }
 
     func cursorSpot(_ nav: NavModel) -> Spot? {
         switch cursor {
@@ -329,6 +350,8 @@ final class AppModel: ObservableObject {
     func onDirection(_ dir: Direction, isRepeat: Bool) {
         switch overlay {
         case .none:
+            // Moving the cursor breaks any pending double-tap pairing.
+            lastSelectSpot = nil
             moveCursor(dir, isRepeat: isRepeat)
         case .menu:
             let items = menuItems()
@@ -430,8 +453,32 @@ final class AppModel: ObservableObject {
         guard let spot = cursorSpot(nav) else {
             return
         }
+
+        // Treat a quick second tap on the same card as a long-press "send home".
+        // Same-spot only, so it never turns a select-then-move into a send-home;
+        // the draw pile is excluded since rapid taps there cycle the stock.
+        var isRightClick = isRightClick
+        if !isRightClick {
+            let now = CardUtils.now()
+            if spot.type != .draw, lastSelectSpot == spot, now - lastSelectTime < Self.doubleTapWindowMs {
+                isRightClick = true
+                lastSelectSpot = nil
+            } else {
+                lastSelectSpot = spot.type == .draw ? nil : spot
+                lastSelectTime = now
+            }
+        } else {
+            lastSelectSpot = nil
+        }
+
         let droppingOnWork = game.state.selection.type != .none && spot.type == .work
+        let before = game.state!
         game.click(spot.type, spot.outer, spot.inner, isRightClick: isRightClick)
+        // A hint stays up through selection/cursor moves, but turns off the
+        // moment a real move lands — before the version bump animates it.
+        if hintsActive && !game.state.boardEquals(before) {
+            hintsActive = false
+        }
         // After dropping on a work column, land on its deepest stop (the tip
         // of the dropped run). While a selection is held the column is a
         // single drop-target stop, so the held stopIdx would otherwise be
@@ -454,6 +501,7 @@ final class AppModel: ObservableObject {
 
     private func afterNewGame() {
         toastShown = false
+        hintsActive = false
         stopAutowin()
         resetCursor()
         refreshSeedQR()
@@ -536,10 +584,23 @@ final class AppModel: ObservableObject {
         items.append(MenuEntry(id: "undo", label: "Undo", enabled: game.canUndo) { [weak self] in
             guard let self else { return }
             self.game.undo()
+            self.hintsActive = false
             // Stay in the menu so the player can keep undoing (like Dark Mode,
             // this is a repeatable in-menu action).
             self.afterAction()
         })
+
+        // Hint: only for modes that can enumerate moves, and only enabled when
+        // there's actually something to point at. Closes the menu and lights up
+        // the movable cards until the next move.
+        if game.mode.supportsHints {
+            items.append(MenuEntry(id: "hint", label: "Hint", enabled: !game.mode.hints(game).isEmpty) { [weak self] in
+                guard let self else { return }
+                self.hintsActive = true
+                self.overlay = .none
+                self.refresh()
+            })
+        }
 
         if game.canAutoWin() {
             items.append(MenuEntry(id: "autowin", label: "Auto-Finish", enabled: true) { [weak self] in
@@ -641,6 +702,7 @@ final class AppModel: ObservableObject {
 
     private func startAutowin() {
         stopAutowin()
+        hintsActive = false
         autowinTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }

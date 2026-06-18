@@ -131,4 +131,49 @@ Hard - 3 cards face down in the first 4 columns. Fill empties with Kings only.
     func cursorStops(_ g: SolitaireGame, _ col: [Int]) -> [Int] {
         faceUpStops(col)
     }
+
+    var supportsHints: Bool { true }
+
+    // Every face-up card whose grabbed group (it plus everything on top) has a
+    // legal home on another column. Mirrors the move rules in click() and the
+    // solver's `children`: descending + matching suit onto a card, empties take
+    // anything (Kings only in hard), and relocating a whole column onto an empty
+    // one is skipped since it accomplishes nothing. validMove inspects only the
+    // grabbed card, so passing it alone is enough to test the move.
+    func hints(_ g: SolitaireGame) -> [HintMove] {
+        let work = g.state.work
+        var validFlags: CardUtils.ValidMove = [.descending, .matchingSuit]
+        if g.state.hard {
+            validFlags.insert(.emptyKingsOnly)
+        }
+
+        var result: [HintMove] = []
+
+        // The stock can still be dealt: dealing is itself an available move, so
+        // point at the draw pile.
+        if !g.state.draw.cards.isEmpty {
+            result.append(HintMove(type: .draw, outer: 0, inner: 0))
+        }
+
+        for (srcCol, col) in work.enumerated() {
+            for i in col.indices {
+                if (col[i] & CardUtils.FLIP_FLAG) != 0 {
+                    // Face-down cards can't be grabbed.
+                    continue
+                }
+                let src = [col[i]]
+                for (dstCol, dst) in work.enumerated() where dstCol != srcCol {
+                    if dst.isEmpty && i == 0 {
+                        // Whole column onto an empty one is a pure relabel.
+                        continue
+                    }
+                    if CardUtils.validMove(src, dst, validFlags) {
+                        result.append(HintMove(type: .work, outer: srcCol, inner: i))
+                        break
+                    }
+                }
+            }
+        }
+        return result
+    }
 }

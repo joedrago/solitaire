@@ -9,11 +9,11 @@ import Foundation
 // from a column is the maximal *descending-by-value* run from the top (color is
 // NOT checked for grouping); only the run's bottom card is checked against the
 // destination (descending + alternating color, or a king onto an empty column).
-// Easy deals 3 at a time with unlimited redeals (recycle waste -> stock in
-// order); hard deals 1 at a time with no redeal.
+// Both modes allow unlimited redeals (recycle waste -> stock in order); easy
+// deals 1 card at a time, hard deals 3.
 struct KlondikeSolver {
     let hard: Bool
-    private var drawCount: Int { hard ? 1 : 3 }
+    private var drawCount: Int { hard ? 3 : 1 }
 
     struct State {
         var cols: [[UInt8]]
@@ -145,13 +145,13 @@ struct KlondikeSolver {
             }
         }
 
-        // Draw, or recycle the waste when the stock is empty (easy only).
+        // Draw, or recycle the waste when the stock is empty (both modes).
         if !s.stock.isEmpty {
             var n = s
             let d = min(drawCount, n.stock.count)
             for _ in 0..<d { n.waste.append(n.stock.removeFirst()) }
             out.append((Move(kind: .draw), n))
-        } else if !hard && !s.waste.isEmpty {
+        } else if !s.waste.isEmpty {
             var n = s
             n.stock = n.waste
             n.waste = []

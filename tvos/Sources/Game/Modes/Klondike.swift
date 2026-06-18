@@ -11,7 +11,7 @@ Build the foundations up in suit from ace to king.
 
 | PLAY:
 
-Cards are flipped 3 at a time to a waste pile. Columns are built down, in \
+Cards are flipped from the stock to a waste pile. Columns are built down, in \
 alternating colors. All packed cards in a column must be moved as a unit \
 to other columns.
 
@@ -19,20 +19,18 @@ The topmost card of any column or the waste pile may be moved to a \
 foundation. The top card of the waste pile may also be moved to a column \
 if desired, thus making the card below it playable also.
 
-Unlimited redeals are allowed.
-
 | HARD MODE:
 
-Easy - Cards are flipped 3 cards at a time with unlimited redeals.
+Easy - Cards are flipped 1 card at a time.
 
-Hard - Cards are flipped 1 card at a time with no redeals.
+Hard - Cards are flipped 3 cards at a time.
 """
 
     func newGame(_ g: SolitaireGame) {
         g.state = GameState(
             hard: g.hard,
             draw: DrawState(pos: "top"),
-            pile: PileState(show: g.hard ? 1 : 3),
+            pile: PileState(show: g.hard ? 3 : 1),
             foundations: [CardUtils.GUIDE, CardUtils.GUIDE, CardUtils.GUIDE, CardUtils.GUIDE]
         )
 
@@ -58,7 +56,7 @@ Hard - Cards are flipped 1 card at a time with no redeals.
 
         switch type {
         case .draw:
-            g.standardDrawClick(allowRecycle: !g.state.hard)
+            g.standardDrawClick(allowRecycle: true)
 
         case .pile:
             g.select(.pile)

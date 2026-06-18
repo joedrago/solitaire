@@ -21,6 +21,12 @@ struct BoardView: View {
         dark ? Color(red: 0.86, green: 0.68, blue: 0.38) : Color.white
     }
 
+    // The hint glow: a soft mint that pops off the green felt yet stays calm,
+    // and clearly distinct from the blue selection and white/amber cursor.
+    private var hintColor: Color {
+        dark ? Color(red: 0.40, green: 0.78, blue: 0.66) : Color(red: 0.58, green: 0.96, blue: 0.80)
+    }
+
     // Color treatment for every card image, per the current dark-mode setting.
     private var cardTreatment: CardTreatment {
         model.darkMode.cardTreatment
@@ -50,6 +56,7 @@ struct BoardView: View {
             let won = model.game.won()
             let board = BoardGeometry.compute(state: state, size: geo.size, won: won)
             let cursorSpot = cursorTargetSpot(board)
+            let hintSpots = model.hintSpots()
 
             ZStack(alignment: .topLeading) {
                 ForEach(Array(board.placements.enumerated()), id: \.element.id) { index, p in
@@ -61,7 +68,9 @@ struct BoardView: View {
                         treatment: cardTreatment,
                         backImage: model.deckColor.imageName,
                         cursor: cursorSpot != nil && p.spot == cursorSpot,
-                        cursorColor: cursorColor
+                        cursorColor: cursorColor,
+                        hint: p.spot.map { hintSpots.contains($0) } ?? false,
+                        hintColor: hintColor
                     )
                     // The win fan sweeps in left to right: cards already on the
                     // table glide to their arc slots, the rest pop in on the
@@ -75,7 +84,7 @@ struct BoardView: View {
                         : .easeOut(duration: 0.18), value: model.version)
                 }
 
-                texts(state: state, board: board, screen: geo.size)
+                texts(state: state, board: board, screen: geo.size, won: won)
             }
             .frame(width: geo.size.width, height: geo.size.height)
             // Implicit move animation: placements are identified by card, so
@@ -112,7 +121,7 @@ struct BoardView: View {
     }
 
     @ViewBuilder
-    private func texts(state: GameState, board: BoardGeometry, screen: CGSize) -> some View {
+    private func texts(state: GameState, board: BoardGeometry, screen: CGSize, won: Bool) -> some View {
         let unit = board.unit
 
         if let centerDisplay = state.centerDisplay {
@@ -143,7 +152,15 @@ struct BoardView: View {
         // night yet stays scannable.
         let gameLabel = "\(model.game.mode.name)\(state.hard ? " (Hard)" : "")"
         let canAutoFinish = model.game.canAutoWin()
+        // For hint-capable modes we quietly track whether any move remains; when
+        // none does (and the game isn't won), the player is stuck — say so.
+        let gameOver = model.game.mode.supportsHints && !won && !model.game.mode.hasMoves(model.game)
         VStack(alignment: .trailing, spacing: 4) {
+            if gameOver {
+                Text("Game Over")
+                    .font(.system(size: 26, weight: .bold, design: .monospaced))
+                    .foregroundColor(Color(red: 1.0, green: 0.27, blue: 0.27))
+            }
             Text(gameLabel)
                 .font(.system(size: 26, weight: canAutoFinish ? .bold : .regular, design: .monospaced))
                 .foregroundColor(canAutoFinish ? Color.yellow : labelColor)
@@ -199,6 +216,8 @@ struct CardImage: View {
     var backImage: String = "cardBack"
     var cursor: Bool = false
     var cursorColor: Color = .white
+    var hint: Bool = false
+    var hintColor: Color = .green
 
     var body: some View {
         let p = placement
@@ -208,11 +227,27 @@ struct CardImage: View {
             .frame(width: p.rect.width, height: p.rect.height)
             .modifier(CardFX(t: treatment))
             .opacity(p.opacity)
+            .overlay(hintBorder)
             .overlay(selectionBorder)
             .overlay(cursorBorder)
             .rotationEffect(.degrees(p.rotation))
             .position(x: p.rect.midX, y: p.rect.midY)
             .zIndex(p.zIndex)
+    }
+
+    // A soft glow framing a card the player could pick up. Gentler than the
+    // cursor (thinner, semi-transparent, blurred halo) so a boardful of hints
+    // reads as a quiet suggestion rather than a wall of alarms. Like the cursor,
+    // it's drawn on the card so overlapping cards clip it to the visible sliver.
+    @ViewBuilder
+    private var hintBorder: some View {
+        if hint {
+            RoundedRectangle(cornerRadius: placement.rect.height * 0.07)
+                .stroke(hintColor, lineWidth: 4)
+                .shadow(color: hintColor.opacity(0.9), radius: 7)
+                .frame(width: placement.rect.width + 6, height: placement.rect.height + 6)
+                .opacity(0.8)
+        }
     }
 
     @ViewBuilder
