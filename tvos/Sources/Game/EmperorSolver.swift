@@ -97,6 +97,12 @@ struct EmperorSolver {
 
         var out: [(Move, State)] = []
 
+        // Empty columns are interchangeable, so any move "to an empty column"
+        // only needs one target — collapse that symmetry up front instead of
+        // generating (and copying) a near-duplicate state per empty column.
+        var firstEmpty = -1
+        for k in 0..<s.cols.count where s.cols[k].isEmpty { firstEmpty = k; break }
+
         // Draw one card from stock to the waste.
         if !s.stock.isEmpty {
             var n = s
@@ -126,12 +132,15 @@ struct EmperorSolver {
         if let t = s.pile.last {
             for k in 0..<s.cols.count {
                 let dst = s.cols[k]
-                if dst.isEmpty || fits(t, on: dst[dst.count - 1]) {
-                    var n = s
-                    n.pile.removeLast()
-                    n.cols[k].append(t)
-                    out.append((Move(kind: .wasteToCol, card: t, to: k), n))
+                if dst.isEmpty {
+                    if k != firstEmpty { continue }
+                } else if !fits(t, on: dst[dst.count - 1]) {
+                    continue
                 }
+                var n = s
+                n.pile.removeLast()
+                n.cols[k].append(t)
+                out.append((Move(kind: .wasteToCol, card: t, to: k), n))
             }
         }
 
@@ -146,7 +155,8 @@ struct EmperorSolver {
                 for k in 0..<s.cols.count where k != i {
                     let dst = s.cols[k]
                     if dst.isEmpty {
-                        if j == 0 { continue } // whole column to empty = relabel
+                        if k != firstEmpty { continue }   // empties are interchangeable
+                        if j == 0 { continue }            // whole column to empty = relabel
                     } else if !fits(g, on: dst[dst.count - 1]) {
                         continue
                     }
@@ -182,31 +192,40 @@ struct EmperorSolver {
     // a gentle depth penalty so the search prefers progress over diving.
     private func priority(_ s: State, _ depth: Int) -> Int { score(s) * 4 - depth }
 
+    // Order-independent over columns and allocation-free (the hot path runs this
+    // per node). Each column (with its face-down count) is FNV-hashed and the
+    // results combined commutatively, so interchangeable column orderings map to
+    // the same key without sorting or copying.
     private func canon(_ s: State) -> Int {
-        var keys: [[UInt8]] = []
-        keys.reserveCapacity(s.cols.count)
+        var colMix: UInt64 = 0
         for i in 0..<s.cols.count {
-            var k = s.cols[i]
-            k.append(255)
-            k.append(s.faceDown[i])
-            keys.append(k)
+            var ch: UInt64 = 1469598103934665603
+            for c in s.cols[i] { ch = (ch ^ UInt64(c)) &* 1099511628211 }
+            ch = (ch ^ UInt64(s.faceDown[i])) &* 1099511628211
+            colMix = colMix &+ (ch | 1)
         }
-        keys.sort(by: SC.lexLess)
-        var h = Hasher()
-        for su in 0..<4 { h.combine(s.found[su]) }
-        h.combine(s.stock)
-        h.combine(s.pile)
-        for k in keys { h.combine(k) }
-        return h.finalize()
+        var h: UInt64 = colMix &* 1099511628211
+        for su in 0..<4 {
+            for v in s.found[su] { h = (h ^ UInt64(v) ^ (UInt64(su) << 8)) &* 1099511628211 }
+            h = h &* 1099511628211
+        }
+        for c in s.stock { h = (h ^ UInt64(c)) &* 1099511628211 }
+        h = h &* 1099511628211
+        for c in s.pile { h = (h ^ UInt64(c)) &* 1099511628211 }
+        return Int(bitPattern: UInt(truncatingIfNeeded: h))
     }
 
+    // Cap the live frontier so a long unsolvable search can't exhaust memory on
+    // the Apple TV. Winnable deals are found in well under this many states.
+    private let frontierCap = 300_000
+
     func solvable(_ initial: State, maxNodes: Int, deadline: Date) -> Bool {
-        bestFirstSolve(initial, isWon: isWon, children: children, priority: priority, canon: canon,
-                       maxNodes: maxNodes, deadline: deadline).won
+        beamSolve(initial, isWon: isWon, children: children, priority: priority, canon: canon,
+                  maxNodes: maxNodes, deadline: deadline, frontierCap: frontierCap).won
     }
 
     func solveWithMoves(_ initial: State, maxNodes: Int, deadline: Date) -> (moves: [Move]?, nodes: Int) {
-        bestFirstSolvePath(initial, isWon: isWon, children: children, priority: priority, canon: canon,
-                           maxNodes: maxNodes, deadline: deadline)
+        beamSolvePath(initial, isWon: isWon, children: children, priority: priority, canon: canon,
+                      maxNodes: maxNodes, deadline: deadline, frontierCap: frontierCap)
     }
 }

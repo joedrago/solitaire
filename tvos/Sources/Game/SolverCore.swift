@@ -69,87 +69,111 @@ struct Move {
     }
 }
 
-// A small binary max-heap (no Comparable payload needed): entries are an Int
-// priority + payload, popped highest-priority first. Used by the best-first
-// searches below.
-struct MaxHeap<T> {
-    private var items: [(p: Int, v: T)] = []
-    var isEmpty: Bool { items.isEmpty }
+// A bucketed priority queue for the beam searches below. Priorities index
+// directly into fixed buckets, so push/pop are O(1) and — crucially — never sift
+// the (heavy, array-backed) state payload the way a binary heap does. That ARC
+// churn from sifting was what pinned the large-game node rate at ~14k/s.
+//
+// `bucketCount`/`bias` map the integer priority into [0, bucketCount); the bias
+// centers the expected range so nothing clamps in practice. Ordering within a
+// bucket is LIFO, which is fine for a heuristic search.
+private struct BucketQueue<T> {
+    private var buckets: [[(T, Int)]] // payload + priority
+    private let bias: Int
+    private(set) var count = 0
+    private var hi = -1 // highest non-empty bucket
+    private var lo: Int // lowest non-empty bucket (advanced while trimming)
 
-    mutating func push(_ p: Int, _ v: T) {
-        items.append((p, v))
-        var i = items.count - 1
-        while i > 0 {
-            let parent = (i - 1) / 2
-            if items[parent].p >= items[i].p { break }
-            items.swapAt(parent, i); i = parent
-        }
+    init(bucketCount: Int = 16384, bias: Int = 8192) {
+        buckets = Array(repeating: [], count: bucketCount)
+        self.bias = bias
+        lo = bucketCount
     }
 
-    mutating func pop() -> (p: Int, v: T)? {
-        guard let top = items.first else { return nil }
-        let last = items.removeLast()
-        if !items.isEmpty {
-            items[0] = last
-            let n = items.count
-            var i = 0
-            while true {
-                let l = 2 * i + 1, r = 2 * i + 2
-                var best = i
-                if l < n && items[l].p > items[best].p { best = l }
-                if r < n && items[r].p > items[best].p { best = r }
-                if best == i { break }
-                items.swapAt(best, i); i = best
-            }
+    @inline(__always) private func index(_ p: Int) -> Int {
+        let i = p + bias
+        if i < 0 { return 0 }
+        if i >= buckets.count { return buckets.count - 1 }
+        return i
+    }
+
+    mutating func push(_ priority: Int, _ value: T) {
+        let i = index(priority)
+        buckets[i].append((value, priority))
+        count += 1
+        if i > hi { hi = i }
+        if i < lo { lo = i }
+    }
+
+    mutating func pop() -> T? {
+        while hi >= 0 && buckets[hi].isEmpty { hi -= 1 }
+        if hi < 0 { return nil }
+        let v = buckets[hi].removeLast().0
+        count -= 1
+        return v
+    }
+
+    // Drop the lowest-priority states to keep the live frontier under `cap`
+    // (turns the search into a beam). Never trims the top bucket.
+    mutating func trim(to cap: Int) {
+        while count > cap {
+            while lo < buckets.count && buckets[lo].isEmpty { lo += 1 }
+            if lo >= hi { break }
+            count -= buckets[lo].count
+            buckets[lo].removeAll(keepingCapacity: false)
+            lo += 1
         }
-        return top
     }
 }
 
-// Budgeted best-first search over the canonical state graph. `priority(state,
-// depth)` returns higher for states to expand sooner — goal-directed, so it
-// jumps to the most promising frontier state instead of diving like DFS (which
-// blows up on the large foundation games). Bool-only and lean for the on-device
-// winnable check; failing within budget is reported as not-winnable.
-func bestFirstSolve<S>(
+// Budgeted beam best-first search over the canonical state graph. `priority(
+// state, depth)` returns higher for states to expand sooner — goal-directed, so
+// it jumps to the most promising frontier state instead of diving like DFS
+// (which blows up on the large foundation games). The frontier is capped to
+// `frontierCap` states, bounding memory (a beam, hence incomplete — failing
+// within budget/cap is a tolerable false negative). Bool-only and lean for the
+// on-device winnable check.
+func beamSolve<S>(
     _ initial: S,
     isWon: (S) -> Bool,
     children: (S) -> [(Move, S)],
     priority: (S, Int) -> Int,
     canon: (S) -> Int,
     maxNodes: Int,
-    deadline: Date
+    deadline: Date,
+    frontierCap: Int
 ) -> (won: Bool, nodes: Int) {
     var visited = Set<Int>()
-    var heap = MaxHeap<(S, Int)>() // (state, depth)
-    heap.push(priority(initial, 0), (initial, 0))
+    var queue = BucketQueue<(S, Int)>() // (state, depth)
+    queue.push(priority(initial, 0), (initial, 0))
     var nodes = 0
-    while let (_, e) = heap.pop() {
-        let (s, depth) = e
+    while let (s, depth) = queue.pop() {
         if isWon(s) { return (true, nodes) }
         if !visited.insert(canon(s)).inserted { continue }
         nodes += 1
         if nodes >= maxNodes || Date() >= deadline { return (false, nodes) }
-        for (_, c) in children(s) { heap.push(priority(c, depth + 1), (c, depth + 1)) }
+        for (_, c) in children(s) { queue.push(priority(c, depth + 1), (c, depth + 1)) }
+        if queue.count > frontierCap { queue.trim(to: frontierCap) }
     }
     return (false, nodes)
 }
 
-// Best-first variant that records the move path via a parent-pointer tree (one
-// node per expanded state) so the CLI tools can print a solution.
-func bestFirstSolvePath<S>(
+// Beam variant that records the move path via a parent-pointer tree (one node
+// per expanded state) so the CLI tools can print a solution.
+func beamSolvePath<S>(
     _ initial: S,
     isWon: (S) -> Bool,
     children: (S) -> [(Move, S)],
     priority: (S, Int) -> Int,
     canon: (S) -> Int,
     maxNodes: Int,
-    deadline: Date
+    deadline: Date,
+    frontierCap: Int
 ) -> (moves: [Move]?, nodes: Int) {
     var visited = Set<Int>()
     var tree: [(move: Move, parent: Int)] = []
-    var heap = MaxHeap<(S, Int, Move?, Int)>() // (state, depth, incoming move, parent tree idx)
-    heap.push(priority(initial, 0), (initial, 0, nil, -1))
+    var queue = BucketQueue<(S, Int, Move?, Int)>() // (state, depth, incoming move, parent tree idx)
+    queue.push(priority(initial, 0), (initial, 0, nil, -1))
     var nodes = 0
 
     func reconstruct(_ idx: Int) -> [Move] {
@@ -159,8 +183,7 @@ func bestFirstSolvePath<S>(
         return moves.reversed()
     }
 
-    while let (_, e) = heap.pop() {
-        let (s, depth, inMove, parentIdx) = e
+    while let (s, depth, inMove, parentIdx) = queue.pop() {
         if isWon(s) {
             if let inMove { return (reconstruct(parentIdx) + [inMove], nodes) }
             return ([], nodes)
@@ -170,7 +193,8 @@ func bestFirstSolvePath<S>(
         if nodes >= maxNodes || Date() >= deadline { return (nil, nodes) }
         let myIdx: Int
         if let inMove { myIdx = tree.count; tree.append((inMove, parentIdx)) } else { myIdx = -1 }
-        for (m, c) in children(s) { heap.push(priority(c, depth + 1), (c, depth + 1, m, myIdx)) }
+        for (m, c) in children(s) { queue.push(priority(c, depth + 1), (c, depth + 1, m, myIdx)) }
+        if queue.count > frontierCap { queue.trim(to: frontierCap) }
     }
     return (nil, nodes)
 }

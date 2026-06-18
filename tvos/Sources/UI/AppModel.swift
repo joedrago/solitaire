@@ -108,11 +108,23 @@ final class AppModel: ObservableObject {
     }
 
     // Modes with a fast on-device solver wired up. Others deal normally even
-    // with the toggle on. Grows as each game's solver lands. (Emperor has a
-    // correct solver — see `solve`/`verify` — but its 2-deck search is heavy on
-    // time and memory, so it stays out of the on-device toggle pending tuning /
-    // a device memory test.)
-    private let winnableSupported: Set<String> = ["scorpion", "yukon"]
+    // with the toggle on. Grows as each game's solver lands.
+    private let winnableSupported: Set<String> = ["scorpion", "yukon", "emperor", "klondike"]
+
+    // Per-mode seed-search budgets for "Winnable only". The small/cheap games
+    // (Scorpion, Yukon — single-deck DFS) solve in a few thousand nodes, so a
+    // big cap is free. Emperor's 2-deck beam search is far heavier: a *small*
+    // per-seed node cap is the key — most winnable deals are found in well under
+    // 80k nodes, so capping there rejects hard deals cheaply and lets the
+    // generator try many more seeds in the window (measured ~0.85-0.95 hit rate
+    // within 25-30s even at 5-9x the Apple TV slowdown).
+    private func winnableBudget(_ mode: String) -> (nodes: Int, perSeedSecs: Double, totalSecs: Double) {
+        switch mode {
+        case "emperor": return (80_000, 12, 30)
+        case "klondike": return (200_000, 6, 25) // single-deck beam, ~400k nodes/s — small cap keeps per-seed time tiny
+        default: return (2_000_000, 3, 25)
+        }
+    }
 
     enum Overlay: Equatable {
         case none
@@ -468,11 +480,12 @@ final class AppModel: ObservableObject {
 
         // Solver work is CPU-heavy; run it off the main thread so the overlay
         // animates and the remote stays responsive, then hop back to deal.
+        let budget = winnableBudget(targetMode)
         let worker = Thread {
             let solver = Solver()
             let seed = solver.findWinnableSeed(
                 mode: targetMode, hard: hard,
-                perSeedNodes: 2_000_000, perSeedSecs: 3, totalSecs: 25
+                perSeedNodes: budget.nodes, perSeedSecs: budget.perSeedSecs, totalSecs: budget.totalSecs
             )
             Task { @MainActor [weak self] in
                 guard let self else { return }

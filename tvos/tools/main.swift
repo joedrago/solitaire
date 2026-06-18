@@ -39,7 +39,11 @@ case "emperor":
     let solver = EmperorSolver(hard: hard)
     let r = solver.solveWithMoves(EmperorSolver.from(gs), maxNodes: maxNodes, deadline: deadline)
     report(r.moves, r.nodes)
+case "klondike":
+    let solver = KlondikeSolver(hard: hard)
+    let r = solver.solveWithMoves(KlondikeSolver.from(gs), maxNodes: maxNodes, deadline: deadline)
+    report(r.moves, r.nodes)
 default:
-    FileHandle.standardError.write(Data("no solver for '\(game)' yet (have: scorpion, yukon, emperor)\n".utf8))
+    FileHandle.standardError.write(Data("no solver for '\(game)' yet (have: scorpion, yukon, emperor, klondike)\n".utf8))
     exit(1)
 }

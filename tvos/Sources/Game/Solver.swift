@@ -31,6 +31,9 @@ final class Solver {
         case "emperor":
             let solver = EmperorSolver(hard: gs.hard)
             return solver.solvable(EmperorSolver.from(gs), maxNodes: maxNodes, deadline: deadline)
+        case "klondike":
+            let solver = KlondikeSolver(hard: gs.hard)
+            return solver.solvable(KlondikeSolver.from(gs), maxNodes: maxNodes, deadline: deadline)
         default:
             return false
         }

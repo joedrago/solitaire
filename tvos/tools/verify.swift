@@ -25,8 +25,11 @@ enum Verify {
         case "emperor":
             let s = EmperorSolver(hard: gs.hard)
             return s.solveWithMoves(EmperorSolver.from(gs), maxNodes: 8_000_000, deadline: deadline).moves
+        case "klondike":
+            let s = KlondikeSolver(hard: gs.hard)
+            return s.solveWithMoves(KlondikeSolver.from(gs), maxNodes: 8_000_000, deadline: deadline).moves
         default:
-            FileHandle.standardError.write(Data("no solver for '\(game)' yet (have: scorpion, yukon, emperor)\n".utf8))
+            FileHandle.standardError.write(Data("no solver for '\(game)' yet (have: scorpion, yukon, emperor, klondike)\n".utf8))
             exit(1)
         }
     }
@@ -43,8 +46,8 @@ enum Verify {
         for (idx, m) in moves.enumerated() {
             let before = g.state!
             switch m.kind {
-            case .stockDeal, .draw:
-                g.click(.draw, 0, 0)
+            case .stockDeal, .draw, .recycle:
+                g.click(.draw, 0, 0) // engine draws or recycles based on stock state
             case .tableau:
                 let inner = g.state.work[m.from].count - m.count
                 g.click(.work, m.from, inner) // select the run (bottom card = m.card)
