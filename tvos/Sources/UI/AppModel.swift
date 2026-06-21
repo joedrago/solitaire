@@ -269,19 +269,19 @@ final class AppModel: ObservableObject {
         case .up:
             switch cursor {
             case .top:
-                // Top of the vertical cycle: a press wraps to the bottom-most row.
-                if wrap { wrapToBottomEnd(nav, x: x, column: nil) }
+                // Top of a lane: a press wraps to the bottom of the same column.
+                if wrap { cursor = laneBottom(nav, col: nav.nearestWorkColumn(toX: x)) }
             case .work(let col, let stopIdx):
                 if stopIdx > 0 {
                     cursor = .work(col: col, stopIdx: stopIdx - 1)
-                } else if let i = nav.nearestIndex(in: nav.top, toX: x) {
+                } else if let i = nav.topAbove(column: col) {
                     cursor = .top(i)
                 } else if wrap {
-                    // No top row above this column; wrap to the bottom end.
-                    wrapToBottomEnd(nav, x: x, column: col)
+                    // Nothing directly above this column; wrap to its own bottom.
+                    cursor = laneBottom(nav, col: col)
                 }
-            case .bottom:
-                let c = nav.nearestWorkColumn(toX: x)
+            case .bottom(let i):
+                let c = nav.bottom[i].column ?? nav.nearestWorkColumn(toX: x)
                 cursor = .work(col: c, stopIdx: nav.workStops[c].count - 1)
             }
 
@@ -295,15 +295,18 @@ final class AppModel: ObservableObject {
             case .work(let col, let stopIdx):
                 if stopIdx < nav.workStops[col].count - 1 {
                     cursor = .work(col: col, stopIdx: stopIdx + 1)
-                } else if let i = nav.bottomTarget(forColumn: col) {
+                } else if let i = nav.bottomBelow(column: col) {
                     cursor = .bottom(i)
                 } else if wrap {
-                    // Nothing below this column; wrap to the top end.
-                    wrapToTopEnd(nav, x: x)
+                    // Nothing directly below this column; wrap to its own top.
+                    cursor = laneTop(nav, col: col)
                 }
-            case .bottom:
-                // Bottom of the vertical cycle: a press wraps to the top-most row.
-                if wrap { wrapToTopEnd(nav, x: x) }
+            case .bottom(let i):
+                // Bottom of a lane: a press wraps to the top of the same column.
+                if wrap {
+                    let c = nav.bottom[i].column ?? nav.nearestWorkColumn(toX: x)
+                    cursor = laneTop(nav, col: c)
+                }
             }
         }
     }
@@ -318,30 +321,23 @@ final class AppModel: ObservableObject {
         return n
     }
 
-    // Jump to the bottom-most vertical position. From a work column, prefer a
-    // bottom spot that column can reach (tied or shared); if none, wrap to the
-    // column's own deepest stop so it stays put. From the top row (column nil),
-    // fall to the nearest untied spot, else the nearest column's deepest stop.
-    private func wrapToBottomEnd(_ nav: NavModel, x: Double, column: Int?) {
-        if let column, let i = nav.bottomTarget(forColumn: column) {
-            cursor = .bottom(i)
-        } else if column == nil, let i = nav.freeBottomNearest(toX: x) {
-            cursor = .bottom(i)
-        } else {
-            let c = nav.nearestWorkColumn(toX: x)
-            cursor = .work(col: c, stopIdx: nav.workStops[c].count - 1)
+    // Bottom-most position in column `col`'s vertical lane: the bottom-row spot
+    // directly below it if there is one, otherwise the column's own deepest
+    // stop. Vertical movement never leaves the lane, so wrapping stays put.
+    private func laneBottom(_ nav: NavModel, col: Int) -> Cursor {
+        if let i = nav.bottomBelow(column: col) {
+            return .bottom(i)
         }
+        return .work(col: col, stopIdx: nav.workStops[col].count - 1)
     }
 
-    // Jump to the top-most vertical position nearest x: the top row if there
-    // is one, otherwise the first stop of the nearest work column.
-    private func wrapToTopEnd(_ nav: NavModel, x: Double) {
-        if let i = nav.nearestIndex(in: nav.top, toX: x) {
-            cursor = .top(i)
-        } else {
-            let c = nav.nearestWorkColumn(toX: x)
-            cursor = .work(col: c, stopIdx: 0)
+    // Top-most position in column `col`'s vertical lane: the top-row spot
+    // directly above it if there is one, otherwise the column's own first stop.
+    private func laneTop(_ nav: NavModel, col: Int) -> Cursor {
+        if let i = nav.topAbove(column: col) {
+            return .top(i)
         }
+        return .work(col: col, stopIdx: 0)
     }
 
     // -----------------------------------------------------------------------------------------------

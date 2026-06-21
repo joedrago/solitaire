@@ -103,38 +103,35 @@ struct NavModel {
         return nav
     }
 
-    func nearestIndex(in row: [NavSpot], toX x: Double) -> Int? {
-        guard !row.isEmpty else { return nil }
-        var best = 0
-        var bestDist = Double.greatestFiniteMagnitude
-        for (i, navSpot) in row.enumerated() {
-            let d = abs(navSpot.x - x)
-            if d < bestDist {
-                bestDist = d
-                best = i
-            }
-        }
-        return best
+    // The top-row spot directly above column `col`, or nil when the space above
+    // the column is empty. "Directly above" means within half a card of the
+    // column's x — unlike a nearest-spot search this refuses to drift sideways,
+    // so up/down stays locked to the column's vertical lane.
+    func topAbove(column col: Int) -> Int? {
+        columnAligned(in: top, toColumn: col)
     }
 
-    // The bottom spot a work column should bridge to with up/down: a spot tied
-    // to this column if there is one, otherwise the nearest untied spot (the
-    // shared draw/pile/reserve of middle-layout modes). A spot tied to a
-    // *different* column is never returned, keeping its column's chain private.
-    func bottomTarget(forColumn col: Int) -> Int? {
+    // The bottom-row spot directly below column `col`: a spot tied to this
+    // column if there is one, otherwise an untied spot within half a card of
+    // its x (the shared draw/pile/reserve of middle-layout modes). A spot tied
+    // to a *different* column is never returned, keeping its chain private. Nil
+    // when the space below the column is empty.
+    func bottomBelow(column col: Int) -> Int? {
         if let i = bottom.firstIndex(where: { $0.column == col }) {
             return i
         }
-        return freeBottomNearest(toX: Double(col))
+        return columnAligned(in: bottom, toColumn: col)
     }
 
-    // Nearest bottom spot that isn't tied to a specific column.
-    func freeBottomNearest(toX x: Double) -> Int? {
+    // Nearest untied spot in `row` sitting within half a card of column `col`'s
+    // x, or nil if the lane above/below the column is empty.
+    private func columnAligned(in row: [NavSpot], toColumn col: Int) -> Int? {
+        let tolerance = 0.5
         var best: Int?
         var bestDist = Double.greatestFiniteMagnitude
-        for (i, navSpot) in bottom.enumerated() where navSpot.column == nil {
-            let d = abs(navSpot.x - x)
-            if d < bestDist {
+        for (i, navSpot) in row.enumerated() where navSpot.column == nil {
+            let d = abs(navSpot.x - Double(col))
+            if d <= tolerance && d < bestDist {
                 bestDist = d
                 best = i
             }

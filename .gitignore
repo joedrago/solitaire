@@ -3,3 +3,5 @@
 package-lock.json
 *.sublime-workspace
 .DS_Store
+tvos/solve
+tvos/verify

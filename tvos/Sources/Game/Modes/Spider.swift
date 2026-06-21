@@ -138,6 +138,10 @@ Hard - Two full decks are used (all four suits). Very hard!
                 // Selecting a fresh column
                 let col = g.state.work[outerIndex]
                 var innerIndex = innerIndex
+                if col.count < 1 {
+                    g.select(.none)
+                    return
+                }
                 if innerIndex != col.count - 1 {
                     innerIndex = 0
                 }

@@ -76,6 +76,10 @@ Hard - 3 cards are dealt face down to columns.
                 // Selecting a fresh column
                 let col = g.state.work[outerIndex]
                 var innerIndex = innerIndex
+                if col.count < 1 {
+                    g.select(.none)
+                    return
+                }
                 if innerIndex != col.count - 1 {
                     innerIndex = 0
                 }

@@ -88,6 +88,10 @@ Hard - 3 cards face down in the first 4 columns. Fill empties with Kings only.
                 // Selecting a fresh column
                 let col = g.state.work[outerIndex]
                 var innerIndex = innerIndex
+                if col.count < 1 {
+                    g.select(.none)
+                    return
+                }
                 while innerIndex < col.count && (col[innerIndex] & CardUtils.FLIP_FLAG) != 0 {
                     // Don't select face down cards
                     innerIndex += 1

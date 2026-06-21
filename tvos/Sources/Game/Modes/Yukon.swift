@@ -82,6 +82,10 @@ Hard - Columns are built on alternating colors.
                 // Selecting a fresh column
                 let col = g.state.work[outerIndex]
                 var innerIndex = innerIndex
+                if col.count < 1 {
+                    g.select(.none)
+                    return
+                }
                 while innerIndex < col.count && (col[innerIndex] & CardUtils.FLIP_FLAG) != 0 {
                     // Don't select face down cards
                     innerIndex += 1
